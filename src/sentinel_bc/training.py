@@ -13,7 +13,7 @@ import pandas as pd
 from sklearn.base import clone
 from sklearn.model_selection import StratifiedKFold
 from .config import ROOT, load_config, write_json
-from .data import load_data, partitions, describe_data
+from .data import load_training_data, describe_data
 from .models import classical_candidates, train_network, NeuralPredictor, tensorflow
 from .calibration import calibrate
 from .conformal import conformalize, prediction_sets
@@ -36,29 +36,51 @@ def cv_summary(name, params, rows, seconds):
     return out
 
 
-def train(mode="full", output_root=ROOT):
-    config = load_config()
+class TrainingCancelled(RuntimeError):
+    """A cooperative cancellation leaves an unselectable, isolated run."""
+
+
+def train(mode="full", output_root=None, data=None, config=None, progress=None, cancelled=None):
+    if output_root is None or Path(output_root).resolve() == ROOT.resolve():
+        raise ValueError("Training needs an isolated output directory. Use train.py or the Training Studio.")
+    output_root = Path(output_root).resolve()
+    for protected in (ROOT / "artifacts", ROOT / "results"):
+        if output_root == protected or protected in output_root.parents or output_root in protected.parents:
+            raise ValueError("The original benchmark directories are read-only")
+
+    def emit(phase, detail=""):
+        if cancelled and cancelled():
+            raise TrainingCancelled("Cancellation requested; no model was activated")
+        if progress:
+            progress(phase, detail)
+
+    emit("Validating data")
+    dataset = load_training_data(data, config, mode)
+    config = dataset.config
     settings = config[mode]
     artifacts = Path(output_root) / "artifacts" / mode
     results = Path(output_root) / "results" / mode
     # An existing locked experiment is never silently replaced or evaluated again.
-    if (artifacts / "manifest.json").exists():
-        raise FileExistsError(f"{mode} already exists. Use --output-root for an independent experiment.")
+    if artifacts.exists() or results.exists():
+        raise FileExistsError("Run outputs already exist; choose a new isolated run directory")
     artifacts.mkdir(parents=True, exist_ok=True)
     results.mkdir(parents=True, exist_ok=True)
-    x, y = load_data()
-    split = partitions(y, config)
+    x, y = dataset.x, dataset.y
+    emit("Splitting data", f"{len(y)} observations; five disjoint roles")
+    split = dataset.split
     fit = split["fit"]
     xf, yf = x.iloc[fit], y[fit]
-    write_json(results / "data_audit.json", describe_data(xf, yf) | {"full_data_sha256": describe_data(x, y)["sha256"],
+    write_json(results / "data_audit.json", describe_data(xf, yf) | {"provenance": dataset.provenance, "full_data_sha256": describe_data(x, y)["sha256"],
         "full_class_counts": {"benign": int(sum(y==0)), "malignant": int(sum(y==1))},
         "note": "Descriptive distributions and correlation analysis use fitting rows only."})
     write_json(results / "partitions.json", {k: {"indices": v.tolist(), "n": len(v), "malignant": int(sum(y[v]))} for k, v in split.items()})
     folds = list(StratifiedKFold(settings["folds"], shuffle=True, random_state=config["seed"]).split(xf, yf))
     summaries, best_classical = [], {}
     for name, params, candidate in classical_candidates(config["seed"], mode):
+        emit("Training classical models", f"{name} {params}")
         started, rows = time.perf_counter(), []
         for a, b in folds:
+            emit("Training classical models", f"{name}: cross-validation fold {len(rows)+1}/{len(folds)}")
             model = clone(candidate).fit(xf.iloc[a], yf[a])
             rows.append(classification_metrics(yf[b], model.predict_proba(xf.iloc[b])[:, 1]))
         summary = cv_summary(name, params, rows, time.perf_counter()-started)
@@ -72,7 +94,9 @@ def train(mode="full", output_root=ROOT):
     for fold, (a, b) in enumerate(folds):
         members = []
         for seed in seeds:
-            prep, network, _ = train_network(xf.iloc[a], yf[a], seed, settings["epochs"], settings["patience"])
+            emit("Training ANN" if seed == seeds[0] else "Training deep ensemble", f"CV fold {fold+1}/{len(folds)}, seed {seed}")
+            prep, network, _ = train_network(xf.iloc[a], yf[a], seed, settings["epochs"], settings["patience"],
+                epoch_callback=lambda epoch, logs: emit("Training neural network", f"Fold {fold+1}, seed {seed}, epoch {epoch+1}; validation loss {logs['val_loss']:.4f}"))
             members.append((prep, network))
         mlp_rows.append(classification_metrics(yf[b], NeuralPredictor(members[:1]).predict_proba(xf.iloc[b])[:, 1]))
         ensemble_rows.append(classification_metrics(yf[b], NeuralPredictor(members).predict_proba(xf.iloc[b])[:, 1]))
@@ -86,13 +110,16 @@ def train(mode="full", output_root=ROOT):
     log.info("selection frozen model=%s rule=mean(accuracy,malignant_recall),nll_tiebreak", chosen["model"])
     candidates, timings = {}, {}
     for name, (_, candidate) in best_classical.items():
+        emit("Fitting selected classical settings", name)
         started = time.perf_counter()
         candidates[name] = clone(candidate).fit(xf, yf)
         timings[name] = time.perf_counter()-started
     members, histories = [], {}
     started = time.perf_counter()
     for seed in seeds:
-        prep, network, history = train_network(xf, yf, seed, settings["epochs"], settings["patience"])
+        emit("Training ANN" if seed == seeds[0] else "Training deep ensemble", f"Final member, seed {seed}")
+        prep, network, history = train_network(xf, yf, seed, settings["epochs"], settings["patience"],
+            epoch_callback=lambda epoch, logs: emit("Training neural network", f"Final seed {seed}, epoch {epoch+1}; validation loss {logs['val_loss']:.4f}"))
         members.append((prep, network))
         histories[str(seed)] = history
         network.save(artifacts / f"mlp_{seed}.keras")
@@ -103,12 +130,15 @@ def train(mode="full", output_root=ROOT):
         candidates["deep_ensemble"] = neural
         timings["deep_ensemble"] = time.perf_counter()-started
     base = candidates[chosen["model"]]
+    emit("Calibrating probabilities", chosen["model"])
     cal = split["calibration"]
     calibrated = calibrate(base, x.iloc[cal], y[cal])
     conf = split["conformal"]
+    emit("Fitting conformal prediction", f"{len(conf)} independent conformalization rows")
     cp = conformalize(calibrated, x.iloc[conf], y[conf], config["conformal_confidence"])
     screen = InputScreen().fit(xf, config["ood_quantile"])
     pi = split["policy"]
+    emit("Selecting the safety policy", f"{len(pi)} development rows; frozen constraints")
     xp = x.iloc[pi]
     p = calibrated.predict_proba(xp)[:, 1]
     u = signals(p, neural, xp, config["mc_passes"])
@@ -119,12 +149,14 @@ def train(mode="full", output_root=ROOT):
         "objective": "Maximize coverage with zero observed accepted malignant policy cases and >=20% coverage; tie chooses smaller threshold.",
         "n": len(pi), "warning": "Empirical policy selection does not establish zero real-world risk."})
     version = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ") + "-" + mode
+    version += "-" + output_root.name[-8:]
     bundle = {"base": base, "calibrated": calibrated, "conformal": cp, "neural": neural,
               "screen": screen, "policy": asdict(policy), "features": list(x.columns), "version": version,
               "candidates": candidates, "background": xf.sample(24, random_state=config["seed"])}
     joblib.dump(bundle, artifacts / "bundle.joblib", compress=3)
     runtime = {p: importlib.metadata.version(p) for p in ["numpy", "scikit-learn", "tensorflow", "keras", "mapie", "xgboost", "joblib"]}
     metadata = {"version": version, "mode": mode, "features": list(x.columns), "config": config,
+                "dataset": dataset.provenance,
                 "class_mapping": {"0": "BENIGN", "1": "MALIGNANT"}, "selected_model": chosen["model"],
                 "selection_rule": "Maximize CV mean of accuracy and malignant recall, break ties with smaller NLL.",
                 "data_sha256": describe_data(x, y)["sha256"], "python": platform.python_version(),
@@ -135,7 +167,9 @@ def train(mode="full", output_root=ROOT):
     write_json(results / "experiment.json", metadata)
     # Everything above is now frozen. This is the only final-test prediction pass.
     from .reporting import evaluate_locked_run
-    evaluate_locked_run(artifacts, results, split, x, y)
+    emit("Evaluating locked test", "Model selection, calibration, conformalization and policy are frozen")
+    evaluate_locked_run(artifacts, results, split, x, y, progress=emit)
+    emit("Saving results", "Validating the complete run before it becomes selectable")
     log.info("completed mode=%s artifacts=%s", mode, artifacts)
     return artifacts
 

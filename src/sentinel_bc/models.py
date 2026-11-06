@@ -40,7 +40,7 @@ def tensorflow():
     return tf
 
 
-def train_network(x, y, seed: int, epochs: int, patience: int):
+def train_network(x, y, seed: int, epochs: int, patience: int, epoch_callback=None):
     from sklearn.model_selection import train_test_split
     tf = tensorflow()
     tf.keras.utils.set_random_seed(seed)
@@ -59,8 +59,10 @@ def train_network(x, y, seed: int, epochs: int, patience: int):
     options.threading.private_threadpool_size = 1
     train = tf.data.Dataset.from_tensor_slices((z[a], y[a].astype("float32"))).shuffle(len(a), seed=seed).batch(32).with_options(options)
     valid = tf.data.Dataset.from_tensor_slices((z[b], y[b].astype("float32"))).batch(64).with_options(options)
-    history = model.fit(train, validation_data=valid, epochs=epochs, verbose=0,
-                        callbacks=[tf.keras.callbacks.EarlyStopping(monitor="val_loss", patience=patience, restore_best_weights=True)])
+    callbacks = [tf.keras.callbacks.EarlyStopping(monitor="val_loss", patience=patience, restore_best_weights=True)]
+    if epoch_callback:
+        callbacks.append(tf.keras.callbacks.LambdaCallback(on_epoch_end=epoch_callback))
+    history = model.fit(train, validation_data=valid, epochs=epochs, verbose=0, shuffle=False, callbacks=callbacks)
     return prep, model, history.history
 
 

@@ -14,6 +14,29 @@ from .uncertainty import signals
 from .safety_gate import apply_policy, SafetyPolicy
 
 
+class ActiveModel:
+    """One atomically replaceable, coherent model/evaluation pair."""
+    def __init__(self):
+        self.lock = threading.RLock()
+        self.engine = None
+        self.run_id = None
+        self.metrics = None
+        self.results = None
+
+    def set(self, run_id, engine, metrics, results):
+        if metrics["version"] != engine.metadata["version"]:
+            raise ValueError("Model and evaluation versions disagree")
+        with self.lock:
+            self.run_id, self.engine, self.metrics, self.results = run_id, engine, metrics, results
+
+    def require(self, expected_version=None):
+        if self.engine is None:
+            raise ValueError("No active model. Finish training and choose Use This Trained Model in Train.")
+        if expected_version is not None and expected_version != self.engine.metadata["version"]:
+            raise ValueError("The active model changed. Refresh the active model before predicting again.")
+        return self.engine
+
+
 class Engine:
     def __init__(self, artifact_dir: str | Path = ROOT / "artifacts/full"):
         self.directory = Path(artifact_dir)

@@ -3,6 +3,7 @@ from contextlib import contextmanager
 from datetime import datetime, timezone
 from pathlib import Path
 import json
+import hashlib
 import sqlite3
 import uuid
 import pandas as pd
@@ -22,6 +23,8 @@ class ReviewStore:
                 CREATE TABLE IF NOT EXISTS audit (
                     id INTEGER PRIMARY KEY AUTOINCREMENT, case_id TEXT NOT NULL REFERENCES cases(case_id),
                     created_at TEXT NOT NULL, event TEXT NOT NULL, payload TEXT NOT NULL);
+                CREATE TABLE IF NOT EXISTS referral_keys (
+                    fingerprint TEXT PRIMARY KEY, case_id TEXT NOT NULL REFERENCES cases(case_id));
                 CREATE TRIGGER IF NOT EXISTS preserve_model_output
                 BEFORE UPDATE OF original_output, model_version, measurements ON cases
                 BEGIN SELECT RAISE(ABORT, 'Original model record is immutable'); END;
@@ -47,6 +50,40 @@ class ReviewStore:
             db.execute("INSERT INTO audit(case_id,created_at,event,payload) VALUES(?,?,?,?)",
                        (case_id, now, "MODEL_RECORDED", json.dumps({"decision": output["decision"]})))
         return case_id
+
+    def refer_once(self, output: dict, measurements: dict):
+        """Idempotent per version + measurements, including simultaneous UI events."""
+        if output["decision"] != "HUMAN_REVIEW_REQUIRED":
+            return None
+        serialized = json.dumps(measurements, sort_keys=True, allow_nan=False)
+        fingerprint = hashlib.sha256((output["model_version"] + serialized).encode()).hexdigest()
+        now = datetime.now(timezone.utc).isoformat()
+        with self.connection() as db:
+            db.execute("BEGIN IMMEDIATE")
+            existing = db.execute("SELECT case_id FROM referral_keys WHERE fingerprint=?", (fingerprint,)).fetchone()
+            if existing:
+                return existing["case_id"]
+            case_id = "case_" + uuid.uuid4().hex[:12]
+            db.execute("INSERT INTO cases(case_id,created_at,model_version,original_output,measurements) VALUES(?,?,?,?,?)",
+                       (case_id, now, output["model_version"], json.dumps(output, allow_nan=False), serialized))
+            db.execute("INSERT INTO audit(case_id,created_at,event,payload) VALUES(?,?,?,?)",
+                       (case_id, now, "MODEL_RECORDED", json.dumps({"decision": output["decision"], "automatic_referral": True})))
+            db.execute("INSERT INTO referral_keys VALUES(?,?)", (fingerprint, case_id))
+        return case_id
+
+    def queue_view(self, status="ALL"):
+        with self.connection() as db:
+            rows = db.execute("SELECT case_id,created_at,original_output,status FROM cases ORDER BY created_at DESC").fetchall()
+        records = []
+        for row in rows:
+            if status != "ALL" and row["status"] != status:
+                continue
+            original = json.loads(row["original_output"])
+            records.append({"Case": row["case_id"], "Prediction": original.get("predicted_class", "Unavailable"),
+                            "Referral reason": ", ".join(original.get("reasons", [])),
+                            "Status": "● Pending" if row["status"] == "PENDING" else "✓ Reviewed",
+                            "Created": row["created_at"]})
+        return pd.DataFrame(records, columns=["Case", "Prediction", "Referral reason", "Status", "Created"])
 
     def list_cases(self, status="ALL"):
         with self.connection() as db:

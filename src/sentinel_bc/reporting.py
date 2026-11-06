@@ -14,6 +14,8 @@ from .config import write_json
 from .inference import Engine
 from .evaluation import classification_metrics, selective_metrics, risk_coverage, wilson
 from .safety_gate import LOW, REVIEW, apply_policy
+from .conformal import prediction_sets
+from .uncertainty import signals
 from .explainability import explain, global_permutation, local_table
 
 
@@ -27,7 +29,7 @@ def bootstrap_auc(y, p):
     return np.quantile(values, [.025, .975]).tolist()
 
 
-def evaluate_locked_run(artifacts, results, split, x, y):
+def evaluate_locked_run(artifacts, results, split, x, y, progress=None):
     engine = Engine(artifacts)
     if (results / "metrics.json").exists():
         cached = json.loads((results / "metrics.json").read_text())
@@ -37,9 +39,16 @@ def evaluate_locked_run(artifacts, results, split, x, y):
     xt, yt = x.iloc[idx], y[idx]
     # Engine upload limits do not constrain the evaluator: use fixed chunks.
     started = time.perf_counter()
-    predictions = sum([engine.predict(xt.iloc[i:i+100]) for i in range(0, len(xt), 100)], [])
+    # Classification metrics cover every valid test measurement, including cases
+    # rejected by the gate. An OOD rejection must not remove a difficult test row.
+    p = engine.bundle["calibrated"].predict_proba(xt)[:, 1]
+    sets = prediction_sets(engine.bundle["conformal"], xt)
+    uncertainty = signals(p, engine.bundle["neural"], xt, engine.metadata["config"]["mc_passes"])
+    valid, ood, _ = engine.bundle["screen"].inspect(xt)
+    extreme = (xt.to_numpy() > engine.bundle["screen"].upper * 100).any(axis=1)
+    valid &= ~extreme
+    decisions = apply_policy(p, uncertainty, sets, valid, ood, engine.policy)
     inference_ms = (time.perf_counter()-started)*1000/len(yt)
-    p = np.array([r["p_malignant"] for r in predictions])
     raw = engine.bundle["base"].predict_proba(xt)[:, 1]
     comparison, probabilities = {}, {}
     for name, model in engine.bundle["candidates"].items():
@@ -50,18 +59,13 @@ def evaluate_locked_run(artifacts, results, split, x, y):
     metric = classification_metrics(yt, p)
     metric["roc_auc_ci95_bootstrap"] = bootstrap_auc(yt, p)
     metric["inference_ms_per_case_with_safety"] = inference_ms
-    sets = np.array([[name in r["prediction_set"] for name in ["BENIGN", "MALIGNANT"]] for r in predictions])
     conformal = {"nominal_coverage": engine.metadata["config"]["conformal_confidence"],
                  "empirical_coverage": float(sets[np.arange(len(yt)), yt].mean()),
                  "coverage_ci95": wilson(int(sets[np.arange(len(yt)), yt].sum()), len(yt)),
                  "mean_set_size": float(sets.sum(axis=1).mean()),
                  "empty_sets": int(sum(sets.sum(axis=1)==0)), "both_class_sets": int(sum(sets.sum(axis=1)==2)),
                  "benign_coverage": float(sets[yt==0, 0].mean()), "malignant_coverage": float(sets[yt==1, 1].mean())}
-    decisions = [(r["decision"], r["reasons"]) for r in predictions]
     selective = selective_metrics(yt, decisions)
-    uncertainty = {k: np.array([r["uncertainty"][k] for r in predictions]) for k in predictions[0]["uncertainty"]}
-    valid = np.ones(len(yt), bool)
-    ood = np.array([r["ood"] for r in predictions])
     uncertainty_accept = (p < engine.policy.max_p_malignant) & (uncertainty["entropy"] <= engine.policy.max_entropy) & (uncertainty["disagreement"] <= engine.policy.max_disagreement) & (uncertainty["mc_std"] <= engine.policy.max_mc_std) & engine.policy.feasible
     ablations = {
         "base_classifier": {"ordinary": classification_metrics(yt, raw), "selective": selective_metrics(yt, [(LOW if v < .5 else REVIEW, []) for v in raw])},
@@ -76,16 +80,17 @@ def evaluate_locked_run(artifacts, results, split, x, y):
         sweep.append({"threshold": float(threshold)} | selective_metrics(yt, ds))
     # Stress tests and feature importance use policy development data, never tune test.
     xp, yp = x.iloc[split["policy"]], y[split["policy"]]
-    stress = robustness(engine, xp, yp)
+    if progress: progress("Robustness and explanations", "Bounded development-data stress tests; the test results remain frozen")
+    stress = robustness(engine, xp.iloc[:100], yp[:100])
     write_demo_cases(engine, xp, yp, split["policy"], results)
-    global_importance = global_permutation(engine, xp, yp)
+    global_importance = global_permutation(engine, xp.iloc[:100], yp[:100])
     global_importance.to_csv(results / "permutation_importance.csv", index=False)
     sv = explain(engine, xp.iloc[:8])
     shap_global = pd.DataFrame({"measurement": engine.features, "mean_abs_shap": np.abs(sv.values).mean(axis=0)}).sort_values("mean_abs_shap", ascending=False)
     shap_global.to_csv(results / "shap_importance.csv", index=False)
     local_table(engine, xp.iloc[:1]).to_csv(results / "local_explanation.csv", index=False)
     table = pd.DataFrame({"row_index": idx, "y_malignant": yt, "p_uncalibrated": raw, "p_malignant": p,
-                          "decision": [r["decision"] for r in predictions], "ood": ood,
+                          "decision": [r[0] for r in decisions], "ood": ood,
                           "set_benign": sets[:, 0], "set_malignant": sets[:, 1], **uncertainty,
                           **{f"p_{name}": v for name, v in probabilities.items()}})
     table.to_csv(results / "test_predictions.csv", index=False)
@@ -103,9 +108,9 @@ def evaluate_locked_run(artifacts, results, split, x, y):
 
 def write_demo_cases(engine, xp, yp, source_indices, results):
     """Choose labeled development examples with the behavior their names promise."""
-    demo_predictions = engine.predict(xp)
+    demo_predictions = sum([engine.predict(xp.iloc[i:i+100]) for i in range(0, len(xp), 100)], [])
     low = next((i for i, r in enumerate(demo_predictions) if r["decision"] == LOW), None)
-    in_scope = [i for i, r in enumerate(demo_predictions) if not r["ood"]]
+    in_scope = [i for i, r in enumerate(demo_predictions) if not r["ood"] and r["p_malignant"] is not None]
     high = max(in_scope, key=lambda i: demo_predictions[i]["p_malignant"]) if in_scope else None
     ambiguous = max(in_scope, key=lambda i: demo_predictions[i]["uncertainty"]["entropy"]) if in_scope else None
     ood_example = next((i for i, r in enumerate(demo_predictions) if r["ood"]), None)
@@ -172,7 +177,7 @@ def draw_figures(results):
         observed, predicted = calibration_curve(y, d[column], n_bins=7, strategy="uniform")
         axes[0].plot(predicted, observed, "o-", label=name)
     axes[0].plot([0, 1], [0, 1], "--", color="gray")
-    axes[0].set(xlabel="Mean malignant probability", ylabel="Observed malignant fraction", title="Reliability (114 test cases)")
+    axes[0].set(xlabel="Mean malignant probability", ylabel="Observed malignant fraction", title=f"Reliability ({len(y)} test cases)")
     axes[0].legend(fontsize=8)
     axes[1].hist([d.entropy[y==0], d.entropy[y==1]], label=["Benign", "Malignant"], bins=12)
     axes[1].set(xlabel="Predictive entropy (bits)", ylabel="Count", title="Calibrated uncertainty")
