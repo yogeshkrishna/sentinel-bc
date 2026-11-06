@@ -14,6 +14,14 @@ def test_no_model_still_opens_training_studio(tmp_path):
         app.studio.predict("Manual", None, None, [1]*30, "")
 
 
+def test_id_dropdowns_keep_selected_values_when_they_lose_focus(tmp_path):
+    app = build_ui(tmp_path / "absent", tmp_path / "review.sqlite3", tmp_path / "runs")
+    dropdowns = {c["props"]["label"]: c["props"] for c in app.config["components"] if c["type"] == "dropdown"}
+    for label in ("Completed runs · benchmark and your experiments", "Select a case"):
+        # Gradio commits the displayed text on blur when custom values are enabled.
+        assert dropdowns[label]["allow_custom_value"] is False
+
+
 @pytest.fixture
 def app(tmp_path):
     if not (ROOT / "artifacts/full/manifest.json").exists():

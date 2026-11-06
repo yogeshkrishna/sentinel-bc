@@ -286,7 +286,7 @@ def build_ui(artifact_dir=None, database=None, runs_root=None):
                 live_logs = gr.Textbox(label="Actual phase and recent activity", lines=4, interactive=False)
             gr.Markdown("### 3 · Choose a completed experiment")
             with gr.Row():
-                runs = gr.Dropdown(initial_choices, value=initial_selected, label="Completed runs · benchmark and your experiments", scale=4, allow_custom_value=True)
+                runs = gr.Dropdown(initial_choices, value=initial_selected, label="Completed runs · benchmark and your experiments", scale=4)
                 refresh_runs = gr.Button("Refresh runs", scale=1)
                 use_model = gr.Button("Use This Trained Model", variant="primary", interactive=bool(initial_selected), scale=2)
             selected_summary = gr.Markdown(selected_info(initial_selected)[0] if initial_selected else "Your completed training runs will appear here.")
@@ -322,7 +322,7 @@ def build_ui(artifact_dir=None, database=None, runs_root=None):
                 refresh_queue = gr.Button("Refresh cases")
             queue_table = gr.Dataframe(store.queue_view(),label="Referred cases",interactive=False)
             saved_cases = store.queue_view().to_dict("records")
-            case = gr.Dropdown(label="Select a case",choices=[(f"{r['Case'][-6:]} · {r['Prediction'].title()} · {r['Status']}",r["Case"]) for r in saved_cases],value=None,allow_custom_value=True)
+            case = gr.Dropdown(label="Select a case",choices=[(f"{r['Case'][-6:]} · {r['Prediction'].title()} · {r['Status']}",r["Case"]) for r in saved_cases],value=None)
             case_summary = gr.Markdown("Select a case from the table or list.")
             with gr.Row():
                 reviewer = gr.Dropdown(["BENIGN","MALIGNANT","FURTHER_REVIEW"],value="FURTHER_REVIEW",label="Reviewer decision")
