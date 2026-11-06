@@ -1,0 +1,27 @@
+seed: 42
+test_fraction: 0.20
+calibration_size: 57
+conformal_size: 57
+policy_size: 68
+conformal_confidence: 0.90
+mc_passes: 20
+max_batch_rows: 100
+max_upload_bytes: 1048576
+ood_quantile: 0.995
+safety:
+  max_entropy: 0.65
+  max_disagreement: 0.15
+  max_mc_std: 0.15
+  min_coverage: 0.20
+  max_missed_malignant: 0
+quick:
+  folds: 3
+  epochs: 20
+  patience: 5
+  ensemble_size: 1
+full:
+  folds: 3
+  epochs: 100
+  patience: 12
+  ensemble_size: 3
+
