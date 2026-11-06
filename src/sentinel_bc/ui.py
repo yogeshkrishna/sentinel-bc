@@ -115,6 +115,15 @@ def build_ui(artifact_dir=None, database=None, runs_root=None):
     def choices():
         return [(f"{'Historical benchmark' if r['run_id']=='benchmark' else r['run_id'][4:19]} · {r['mode'].title()} · {r['model']} · {percent(r['accuracy'])}", r["run_id"]) for r in manager.completed()]
 
+    def resolve_run_selection(selection):
+        # An open tab from an older Studio can submit the visible label on blur.
+        if isinstance(selection, str) and (selection == "benchmark" or selection.startswith("run_")):
+            return selection
+        matches = [run_id for label, run_id in choices() if label == selection]
+        if len(matches) == 1:
+            return matches[0]
+        raise ValueError("Select a completed experiment. Click Refresh runs if yours is missing.")
+
     def active_text():
         if manager.active.engine is None:
             return "**No active model.** Train your data below; no old model download is required."
@@ -173,7 +182,7 @@ def build_ui(artifact_dir=None, database=None, runs_root=None):
         if not run_id:
             return "No completed experiment selected.", pd.DataFrame()
         try:
-            metadata, metrics, _ = manager.validate_run(run_id, load_engine=False)
+            metadata, metrics, _ = manager.validate_run(resolve_run_selection(run_id), load_engine=False)
             dataset = metadata.get("dataset", {"source": "Historical WDBC benchmark", "n": 569, "interpretation": "Preserved v1.0.0 evidence"})
             message = f"**{dataset['source']}** · {dataset['n']} rows · {metadata['mode'].title()} · `{metrics['version']}`\n\n{dataset['interpretation']}"
             if "fingerprint" in dataset:
@@ -289,6 +298,7 @@ def build_ui(artifact_dir=None, database=None, runs_root=None):
                 runs = gr.Dropdown(initial_choices, value=initial_selected, label="Completed runs · benchmark and your experiments", scale=4)
                 refresh_runs = gr.Button("Refresh runs", scale=1)
                 use_model = gr.Button("Use This Trained Model", variant="primary", interactive=bool(initial_selected), scale=2)
+            activation_status = gr.Markdown()
             selected_summary = gr.Markdown(selected_info(initial_selected)[0] if initial_selected else "Your completed training runs will appear here.")
             with gr.Accordion("Selected experiment comparison", open=False):
                 selected_table = gr.Dataframe(selected_info(initial_selected)[1] if initial_selected else pd.DataFrame(), interactive=False)
@@ -384,8 +394,8 @@ def build_ui(artifact_dir=None, database=None, runs_root=None):
         def activate(run_id):
             try:
                 with manager.active.lock:
-                    manager.activate(run_id)
-                    return active_view()
+                    manager.activate(resolve_run_selection(run_id))
+                    return active_view() + ["**Model ready.** Open **Predict** to use it or **Results** to see its evaluation."]
             except (ValueError,OSError,KeyError) as exc: raise gr.Error(str(exc)) from exc
 
         def predict(source,upload,selected_example,version,batch_opt_in,*values):
@@ -431,11 +441,12 @@ def build_ui(artifact_dir=None, database=None, runs_root=None):
         timer.tick(poll,job_state,[job_state,training_status,live_logs,train_button,runs,use_model,cancel_button],api_name=False,show_progress="hidden")
         cancel_button.click(lambda run_id:manager.cancel(run_id) if run_id else "No training job is running.",job_state,training_status,api_name="cancel_training",queue=False)
         refresh_runs.click(lambda:gr.update(choices=choices()),outputs=runs,api_name="refresh_runs")
-        runs.change(selected_info,runs,[selected_summary,selected_table],api_name="selected_run")
-        runs.change(lambda run_id:gr.update(interactive=bool(run_id)),runs,use_model,api_name=False)
+        runs.change(selected_info,runs,[selected_summary,selected_table],api_name="selected_run",preprocess=False)
+        runs.change(lambda run_id:gr.update(interactive=bool(run_id)),runs,use_model,api_name=False,preprocess=False)
         activation_outputs = [active_banner,active_version,example,decision,referral,prediction_detail,report,explanation,prediction_state,batch_table,threshold_result]+manual_inputs+result_outputs
         demo.load(refresh_active, outputs=activation_outputs, api_name=False, show_progress="hidden")
-        use_model.click(activate,runs,activation_outputs,api_name="activate_run",concurrency_id="inference",concurrency_limit=1)
+        use_model.click(activate,runs,activation_outputs + [activation_status],api_name="activate_run",
+                        concurrency_id="inference",concurrency_limit=1,preprocess=False)
         prediction_source.change(lambda source:(gr.update(visible=source=="Example"),gr.update(visible=source=="CSV"),gr.update(visible=source=="CSV")),prediction_source,[example,prediction_upload,queue_batch])
         example.change(load_example,[example,active_version],manual_inputs,api_name="load_example",concurrency_id="inference")
         predict_button.click(predict,[prediction_source,prediction_upload,example,active_version,queue_batch]+manual_inputs,[decision,referral,prediction_detail,explanation,prediction_state,report,batch_table,queue_table,case],api_name="predict_case",concurrency_id="inference",concurrency_limit=1)

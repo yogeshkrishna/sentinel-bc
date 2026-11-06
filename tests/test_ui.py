@@ -65,12 +65,21 @@ def test_auto_referral_is_idempotent_and_batch_is_opt_in(app, tmp_path):
     assert len(records) == len(examples) and len(app.studio.store.list_cases()) == 1
 
 
-def test_activation_clears_prediction_state_and_updates_results(app):
+@pytest.mark.parametrize("submit_label", [False, True])
+def test_activation_clears_prediction_state_and_updates_results(app, submit_label):
     callbacks = {f.api_name:f.fn for f in app.fns.values()}
-    result = callbacks["activate_run"]("benchmark")
+    dropdown = next(c for c in app.config["components"] if c.get("props", {}).get("label", "").startswith("Completed runs"))
+    label, run_id = dropdown["props"]["choices"][0]
+    selection = label if submit_label else run_id
+    if submit_label:
+        activation = next(f for f in app.fns.values() if f.api_name == "activate_run")
+        assert activation.preprocess is False
+        assert "Historical WDBC benchmark" in callbacks["selected_run"](selection)[0]
+    result = callbacks["activate_run"](selection)
     assert result[5] is None and result[6] is None and result[8] is None
     assert app.studio.manager.active.engine.metadata["version"] in result[41]
     assert "100.00%" in result[42] and "33.33%" in result[42]
+    assert "Model ready" in result[-1] and "Predict" in result[-1]
 
 
 def test_upload_callback_reports_blocking_error(app, tmp_path):
