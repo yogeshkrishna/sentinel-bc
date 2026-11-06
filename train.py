@@ -1,4 +1,4 @@
-"""Train explicitly; the application never calls this entry point."""
+"""Start the same isolated training worker used by Gradio."""
 import argparse
 import logging
 from pathlib import Path
@@ -15,7 +15,7 @@ if __name__ == "__main__":
     parser.add_argument("--epochs", type=int, help="Optional neural epoch budget (2–200); YAML defaults otherwise")
     args = parser.parse_args()
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s %(message)s")
-    manager = RunManager(args.output_root)
+    manager = RunManager(args.output_root, restore_active=False)
     run_id = manager.start(args.mode, args.data, args.seed, args.epochs)
     print(f"Run: {run_id}\nDirectory: {manager.root / run_id}", flush=True)
     previous = None

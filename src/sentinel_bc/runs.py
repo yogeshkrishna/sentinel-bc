@@ -67,7 +67,7 @@ def pid_alive(pid):
 
 
 class RunManager:
-    def __init__(self, root=None, benchmark_artifacts=None):
+    def __init__(self, root=None, benchmark_artifacts=None, *, restore_active=True):
         self.root = Path(root or ROOT / "runtime/training").resolve()
         for protected in (ROOT, ROOT / "artifacts", ROOT / "results"):
             if self.root == protected or protected != ROOT and protected in self.root.parents:
@@ -78,8 +78,13 @@ class RunManager:
         self._mutex = threading.RLock()
         self.processes = {}
         self.notice = "No active model. Train a dataset or activate a completed run."
+        if not restore_active:
+            return
         saved = self.root / "active.json"
-        preferred = json.loads(saved.read_text())["run_id"] if saved.exists() else "benchmark"
+        try:
+            preferred = json.loads(saved.read_text())["run_id"] if saved.exists() else "benchmark"
+        except (ValueError, OSError, KeyError):
+            preferred = "benchmark"
         try:
             self.activate(preferred)
         except (ValueError, FileNotFoundError, KeyError) as exc:
@@ -94,15 +99,17 @@ class RunManager:
     def paths(self, run_id):
         if run_id == "benchmark":
             return self.benchmark, self.benchmark.parent.parent / "results" / self.benchmark.name
+        if not isinstance(run_id, str):
+            raise ValueError("Choose a completed run")
         directory = self.root / run_id
-        if directory.parent != self.root or not run_id.startswith("run_"):
+        if directory.parent != self.root or not run_id.startswith("run_") or not directory.is_dir():
             raise ValueError("Unknown run ID")
         record = json.loads((directory / "run.json").read_text())
         return directory / "artifacts" / record["mode"], directory / "results" / record["mode"]
 
     def status(self, run_id):
         directory = self.root / run_id
-        if directory.parent != self.root or not run_id.startswith("run_"):
+        if directory.parent != self.root or not run_id.startswith("run_") or not directory.is_dir():
             raise ValueError("Unknown run ID")
         path = directory / "run.json"
         record = json.loads(path.read_text())
@@ -110,9 +117,11 @@ class RunManager:
         if record["status"] in ("QUEUED", "RUNNING", "CANCELLING"):
             exited = process is not None and process.poll() is not None
             if exited or not pid_alive(record["pid"]):
-                record.update(status="INTERRUPTED", phase="Worker interrupted", error="Training process ended before completion. Start a new run.", finished_at=now())
-                atomic_json(path, record)
-                self._release_lock(run_id)
+                record = json.loads(path.read_text())
+                if record["status"] in ("QUEUED", "RUNNING", "CANCELLING"):
+                    record.update(status="INTERRUPTED", phase="Worker interrupted", error="Training process ended before completion. Start a new run.", finished_at=now())
+                    atomic_json(path, record)
+                    self._release_lock(run_id)
         record["elapsed_seconds"] = round(time.time() - record["started_unix"], 1) if "finished_at" not in record else record.get("duration_seconds", 0)
         return record
 

@@ -121,7 +121,8 @@ def write_demo_cases(engine, xp, yp, source_indices, results):
             continue
         source_row = int(source_indices[i])
         label = "MALIGNANT" if yp[i] else "BENIGN"
-        demo_rows.append({"example_name": f"{name} · {label} · WDBC row {source_row}", "source_row": source_row,
+        origin = "Source row" if engine.metadata.get("dataset", {}).get("same_underlying_wdbc") is False else "WDBC row"
+        demo_rows.append({"example_name": f"{name} · {label} · {origin} {source_row}", "source_row": source_row,
                           "source_label": label, "data_role": "policy_development", **xp.iloc[i].to_dict()})
     pd.DataFrame(demo_rows).to_csv(results / "demo_cases.csv", index=False)
 

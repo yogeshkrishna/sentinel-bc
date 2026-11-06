@@ -29,6 +29,17 @@ def test_valid_csv_mapping_and_shuffled_copy(csv_frame, tmp_path):
     assert dataset.provenance["excluded_columns"] == ["diagnosis", "sample_id"]
     assert dataset.provenance["fingerprint"] == load_training_data().provenance["fingerprint"]
     assert len(dataset.x.columns) == 30
+    expected = partitions(y, load_config())
+    assert all(np.array_equal(dataset.split[role], idx) for role, idx in expected.items())
+
+
+def test_csv_rejects_mismatched_row_width(csv_frame, tmp_path):
+    path = save(tmp_path, csv_frame)
+    lines = path.read_text().splitlines()
+    lines[1] = "unexpected," + lines[1]
+    path.write_text("\n".join(lines) + "\n")
+    with pytest.raises(ValueError, match="column count"):
+        load_training_data(path)
 
 
 @pytest.mark.parametrize("labels", ["numeric", "words", "both"])

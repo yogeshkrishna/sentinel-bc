@@ -75,11 +75,15 @@ def load_training_data(source=None, config=None, mode="quick") -> TrainingData:
         try:
             import csv
             with path.open(encoding="utf-8-sig", newline="") as stream:
-                headers = next(csv.reader(stream))
-            if len(set(headers)) != len(headers):
-                raise ValueError("Duplicate column names are not allowed")
+                reader = csv.reader(stream, strict=True)
+                headers = next(reader)
+                if not headers or len(set(headers)) != len(headers):
+                    raise ValueError("The CSV header is empty or contains duplicate column names")
+                for row in reader:
+                    if row and len(row) != len(headers):
+                        raise ValueError(f"CSV line {reader.line_num} does not match the header column count")
             frame = pd.read_csv(path, float_precision="round_trip")
-        except (UnicodeError, pd.errors.ParserError, StopIteration) as exc:
+        except (UnicodeError, csv.Error, pd.errors.ParserError, StopIteration) as exc:
             raise ValueError("Upload a UTF-8 CSV with a header row") from exc
         targets = [c for c in ("label", "diagnosis", "target") if c in frame]
         if not targets:
@@ -121,7 +125,8 @@ def load_training_data(source=None, config=None, mode="quick") -> TrainingData:
     same = len(x) == len(builtin_x) and set(hashes) == set(builtin_hashes)
     if same and any(builtin_map[h] != label for h, label in zip(hashes, y)):
         raise ValueError("This WDBC copy conflicts with the official labels; check for inverted target mapping")
-    benchmark_split = partitions(builtin_y, load_config())
+    benchmark_config = load_config() | {"seed": 42, "test_fraction": .20}
+    benchmark_split = partitions(builtin_y, benchmark_config)
     locked_hashes = {builtin_hashes[i] for i in benchmark_split["test"]}
     if not same and locked_hashes.intersection(hashes):
         raise ValueError("This mixed/subset CSV contains known benchmark test observations. They cannot enter a new fitting pool. Use the complete WDBC corpus or an independent compatible dataset.")
@@ -134,7 +139,8 @@ def load_training_data(source=None, config=None, mode="quick") -> TrainingData:
         config["conformal_size"] = max(40, round(len(x) * .10))
         config["policy_size"] = max(40, round(len(x) * .12))
     try:
-        split = partitions(y, config, benchmark_split["test"] if same else None)
+        preserve = same and (config["seed"] != 42 or config["test_fraction"] != .20)
+        split = partitions(y, config, benchmark_split["test"] if preserve else None)
     except ValueError as exc:
         raise ValueError("Not enough observations for stratified fitting, calibration, conformalization, policy and test partitions") from exc
     for role, idx in split.items():
