@@ -1,0 +1,161 @@
+{
+  "base_classifier": {
+    "ordinary": {
+      "n": 114,
+      "positive_class": "MALIGNANT=1",
+      "correct": 109,
+      "accuracy": 0.956140350877193,
+      "accuracy_ci95": [
+        0.9014191976891217,
+        0.981122490446672
+      ],
+      "precision": 0.9743589743589743,
+      "malignant_recall": 0.9047619047619048,
+      "recall_ci95": [
+        0.7793489419142897,
+        0.9623377511944261
+      ],
+      "specificity": 0.9861111111111112,
+      "f1": 0.9382716049382716,
+      "roc_auc": 0.9966931216931216,
+      "pr_auc": 0.9944826613593767,
+      "brier": 0.026610597076928956,
+      "nll": 0.08401017919984398,
+      "ece": 0.03683260610644897,
+      "tn": 71,
+      "fp": 1,
+      "fn": 4,
+      "tp": 38,
+      "confusion_matrix": [
+        [
+          71,
+          1
+        ],
+        [
+          4,
+          38
+        ]
+      ]
+    },
+    "selective": {
+      "n": 114,
+      "accepted": 75,
+      "coverage": 0.6578947368421053,
+      "review_rate": 0.3421052631578947,
+      "accepted_accuracy": 0.9466666666666667,
+      "accepted_accuracy_ci95": [
+        0.8707401284620144,
+        0.9790665722533456
+      ],
+      "accepted_malignant": 4,
+      "accepted_case_false_negative_rate": 0.05333333333333334,
+      "malignant_escape_rate": 0.09523809523809523,
+      "malignant_referral_rate": 0.9047619047619048,
+      "referred_malignant": 38,
+      "referred_benign": 1,
+      "out_of_scope": 0
+    }
+  },
+  "calibrated_classifier": {
+    "ordinary": {
+      "n": 114,
+      "positive_class": "MALIGNANT=1",
+      "correct": 109,
+      "accuracy": 0.956140350877193,
+      "accuracy_ci95": [
+        0.9014191976891217,
+        0.981122490446672
+      ],
+      "precision": 0.9743589743589743,
+      "malignant_recall": 0.9047619047619048,
+      "recall_ci95": [
+        0.7793489419142897,
+        0.9623377511944261
+      ],
+      "specificity": 0.9861111111111112,
+      "f1": 0.9382716049382716,
+      "roc_auc": 0.9966931216931216,
+      "pr_auc": 0.9944826613593767,
+      "brier": 0.03240655452099968,
+      "nll": 0.12242781638570184,
+      "ece": 0.06469518580094145,
+      "tn": 71,
+      "fp": 1,
+      "fn": 4,
+      "tp": 38,
+      "confusion_matrix": [
+        [
+          71,
+          1
+        ],
+        [
+          4,
+          38
+        ]
+      ],
+      "roc_auc_ci95_bootstrap": [
+        0.9897486772486773,
+        1.0
+      ],
+      "inference_ms_per_case_with_safety": 11.148316666661055
+    },
+    "selective": {
+      "n": 114,
+      "accepted": 75,
+      "coverage": 0.6578947368421053,
+      "review_rate": 0.3421052631578947,
+      "accepted_accuracy": 0.9466666666666667,
+      "accepted_accuracy_ci95": [
+        0.8707401284620144,
+        0.9790665722533456
+      ],
+      "accepted_malignant": 4,
+      "accepted_case_false_negative_rate": 0.05333333333333334,
+      "malignant_escape_rate": 0.09523809523809523,
+      "malignant_referral_rate": 0.9047619047619048,
+      "referred_malignant": 38,
+      "referred_benign": 1,
+      "out_of_scope": 0
+    }
+  },
+  "calibrated_with_uncertainty": {
+    "selective": {
+      "n": 114,
+      "accepted": 38,
+      "coverage": 0.3333333333333333,
+      "review_rate": 0.6666666666666667,
+      "accepted_accuracy": 1.0,
+      "accepted_accuracy_ci95": [
+        0.908190131774416,
+        0.9999999999999999
+      ],
+      "accepted_malignant": 0,
+      "accepted_case_false_negative_rate": 0.0,
+      "malignant_escape_rate": 0.0,
+      "malignant_referral_rate": 1.0,
+      "referred_malignant": 42,
+      "referred_benign": 34,
+      "out_of_scope": 0
+    }
+  },
+  "full_safety_gate": {
+    "selective": {
+      "n": 114,
+      "accepted": 38,
+      "coverage": 0.3333333333333333,
+      "review_rate": 0.6666666666666667,
+      "accepted_accuracy": 1.0,
+      "accepted_accuracy_ci95": [
+        0.908190131774416,
+        0.9999999999999999
+      ],
+      "accepted_malignant": 0,
+      "accepted_case_false_negative_rate": 0.0,
+      "malignant_escape_rate": 0.0,
+      "malignant_referral_rate": 1.0,
+      "referred_malignant": 42,
+      "referred_benign": 34,
+      "out_of_scope": 0
+    }
+  }
+}

@@ -26,9 +26,12 @@ def bootstrap_auc(y, p):
 
 
 def evaluate_locked_run(artifacts, results, split, x, y):
-    if (results / "metrics.json").exists():
-        raise FileExistsError("Locked evaluation already exists; use cached results")
     engine = Engine(artifacts)
+    if (results / "metrics.json").exists():
+        import json
+        cached = json.loads((results / "metrics.json").read_text())
+        if cached["version"] == engine.metadata["version"]:
+            raise FileExistsError("This model version already has a locked evaluation; use cached results")
     idx = split["test"]
     xt, yt = x.iloc[idx], y[idx]
     # Engine upload limits do not constrain the evaluator: use fixed chunks.

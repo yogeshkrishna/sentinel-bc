@@ -17,7 +17,9 @@ CSS = """
 #hero p {color: #d6e8e7; max-width: 850px; font-size: 16px; line-height: 1.65;}
 #hero .eyebrow {font-size: 12px; font-weight: 700; letter-spacing: 2px; color: #8fd6ca;}
 .notice {border-left: 4px solid #bd8732; padding: 12px 18px; background: #fff8e9; color: #514027; border-radius: 4px;}
+.notice b {color: #514027 !important;}
 #decision {padding: 20px; border: 1px solid #b7d6cf; border-radius: 12px; background: #f0faf7;}
+#decision h3, #decision p {color: #174f47 !important;}
 .tab-nav button {font-weight: 600 !important;}
 footer {display: none !important;}
 @media(max-width:700px) {#hero {padding: 22px;} #hero h1 {font-size: 32px;}}
@@ -41,6 +43,8 @@ def build_ui(artifact_dir=None, database=None):
     mode = engine.metadata["mode"]
     directory = artifact_dir.parent.parent / "results" / mode
     metrics = json.loads((directory / "metrics.json").read_text())
+    if metrics["version"] != engine.metadata["version"]:
+        raise ValueError("Evaluation results and model artifacts belong to different versions")
     cv = json.loads((directory / "cross_validation.json").read_text())
     example_path = directory / "demo_cases.csv"
     examples = pd.read_csv(example_path) if example_path.exists() else None
@@ -132,7 +136,7 @@ def build_ui(artifact_dir=None, database=None):
                     with gr.Column():
                         gr.Markdown(f"### {group}")
                         for i in range(start, start+10):
-                            feature_inputs.append(gr.Number(value=defaults[i], label=engine.features[i], precision=6, info="Nonnegative numerical source measurement"))
+                            feature_inputs.append(gr.Number(value=defaults[i], label=engine.features[i], precision=6))
             selector.change(load_example, selector, feature_inputs, api_name="load_example")
             run = gr.Button("Evaluate case", variant="primary")
             state = gr.State()

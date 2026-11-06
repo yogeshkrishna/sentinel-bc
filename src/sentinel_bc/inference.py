@@ -49,6 +49,10 @@ class Engine:
     def predict(self, frame: pd.DataFrame) -> list[dict]:
         x = validate_frame(frame, self.features, self.metadata["config"]["max_batch_rows"])
         valid, ood, distance = self.bundle["screen"].inspect(x)
+        # Extreme magnitudes would overflow float32 neural inputs. Fail closed
+        # before any classifier sees them, while preserving ordinary OOD signals.
+        extreme = (x.to_numpy() > self.bundle["screen"].upper * 100).any(axis=1)
+        valid = valid & ~extreme
         # Invalid rows are represented without feeding nonfinite values to a model.
         output = [None] * len(x)
         for i in np.flatnonzero(~valid):

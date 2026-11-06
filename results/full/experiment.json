@@ -1,0 +1,103 @@
+{
+  "version": "20261106T070142Z-full",
+  "mode": "full",
+  "features": [
+    "mean radius",
+    "mean texture",
+    "mean perimeter",
+    "mean area",
+    "mean smoothness",
+    "mean compactness",
+    "mean concavity",
+    "mean concave points",
+    "mean symmetry",
+    "mean fractal dimension",
+    "radius error",
+    "texture error",
+    "perimeter error",
+    "area error",
+    "smoothness error",
+    "compactness error",
+    "concavity error",
+    "concave points error",
+    "symmetry error",
+    "fractal dimension error",
+    "worst radius",
+    "worst texture",
+    "worst perimeter",
+    "worst area",
+    "worst smoothness",
+    "worst compactness",
+    "worst concavity",
+    "worst concave points",
+    "worst symmetry",
+    "worst fractal dimension"
+  ],
+  "config": {
+    "seed": 42,
+    "test_fraction": 0.2,
+    "calibration_size": 57,
+    "conformal_size": 57,
+    "policy_size": 68,
+    "conformal_confidence": 0.9,
+    "mc_passes": 20,
+    "max_batch_rows": 100,
+    "max_upload_bytes": 1048576,
+    "ood_quantile": 0.995,
+    "safety": {
+      "max_entropy": 0.65,
+      "max_disagreement": 0.15,
+      "max_mc_std": 0.15,
+      "min_coverage": 0.2,
+      "max_missed_malignant": 0
+    },
+    "quick": {
+      "folds": 3,
+      "epochs": 20,
+      "patience": 5,
+      "ensemble_size": 1
+    },
+    "full": {
+      "folds": 3,
+      "epochs": 100,
+      "patience": 12,
+      "ensemble_size": 3
+    }
+  },
+  "class_mapping": {
+    "0": "BENIGN",
+    "1": "MALIGNANT"
+  },
+  "selected_model": "rbf_svm",
+  "selection_rule": "Maximize CV mean of accuracy and malignant recall, break ties with smaller NLL.",
+  "data_sha256": "3019c221882c9c756a9b1c76da7ad72cf606ffe8e51791044aeaadeb33efbd12",
+  "python": "3.12.10",
+  "runtime_versions": {
+    "numpy": "2.2.6",
+    "scikit-learn": "1.7.2",
+    "tensorflow": "2.20.0",
+    "keras": "3.15.1",
+    "mapie": "1.2.0",
+    "xgboost": "3.1.1",
+    "joblib": "1.5.2"
+  },
+  "seeds": [
+    42,
+    142,
+    242
+  ],
+  "training_seconds": {
+    "logistic": 0.03534099999524187,
+    "rbf_svm": 0.06461660000059055,
+    "random_forest": 0.9294369999988703,
+    "xgboost": 0.2896573999969405,
+    "mlp": 8.112234400000792,
+    "deep_ensemble": 24.336712300006184
+  },
+  "files": {
+    "bundle.joblib": "912003bb64471b81fe67c23127c0d364c96a93b893a81fb46036b09c16e81404",
+    "mlp_142.keras": "06e0492da300cb715876d70e799b29032f593006a56d7e98e844b6bd7bff197f",
+    "mlp_242.keras": "9a3e6e7592285dd23214f7adbbb1fb89e7894586e5663482eb169a102afe70c5",
+    "mlp_42.keras": "31148ae59158368192c169ec1f020717c9fafdbaa498bad6bb00ad09791f73f8"
+  }
+}

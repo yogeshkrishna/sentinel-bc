@@ -23,9 +23,9 @@ class InputScreen:
     def inspect(self, x):
         a = np.asarray(x, dtype=float)
         valid = np.isfinite(a).all(axis=1) & (a >= 0).all(axis=1)
-        clean = np.nan_to_num(a, nan=0, posinf=0, neginf=0)
+        clean = np.clip(np.nan_to_num(a, nan=0, posinf=0, neginf=0), 0, self.upper * 100)
         distance = self.covariance.mahalanobis(self.transform.transform(pd.DataFrame(clean, columns=x.columns)))
-        ood = (distance > self.distance_limit) | (clean > self.upper).any(axis=1)
+        ood = (distance > self.distance_limit) | (a > self.upper).any(axis=1)
         return valid, ood, distance
 
 

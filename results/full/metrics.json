@@ -1,0 +1,352 @@
+{
+  "selected_model": "rbf_svm",
+  "version": "20261106T070142Z-full",
+  "test": {
+    "n": 114,
+    "positive_class": "MALIGNANT=1",
+    "correct": 109,
+    "accuracy": 0.956140350877193,
+    "accuracy_ci95": [
+      0.9014191976891217,
+      0.981122490446672
+    ],
+    "precision": 0.9743589743589743,
+    "malignant_recall": 0.9047619047619048,
+    "recall_ci95": [
+      0.7793489419142897,
+      0.9623377511944261
+    ],
+    "specificity": 0.9861111111111112,
+    "f1": 0.9382716049382716,
+    "roc_auc": 0.9966931216931216,
+    "pr_auc": 0.9944826613593767,
+    "brier": 0.03240655452099968,
+    "nll": 0.12242781638570184,
+    "ece": 0.06469518580094145,
+    "tn": 71,
+    "fp": 1,
+    "fn": 4,
+    "tp": 38,
+    "confusion_matrix": [
+      [
+        71,
+        1
+      ],
+      [
+        4,
+        38
+      ]
+    ],
+    "roc_auc_ci95_bootstrap": [
+      0.9897486772486773,
+      1.0
+    ],
+    "inference_ms_per_case_with_safety": 11.148316666661055
+  },
+  "uncalibrated": {
+    "n": 114,
+    "positive_class": "MALIGNANT=1",
+    "correct": 109,
+    "accuracy": 0.956140350877193,
+    "accuracy_ci95": [
+      0.9014191976891217,
+      0.981122490446672
+    ],
+    "precision": 0.9743589743589743,
+    "malignant_recall": 0.9047619047619048,
+    "recall_ci95": [
+      0.7793489419142897,
+      0.9623377511944261
+    ],
+    "specificity": 0.9861111111111112,
+    "f1": 0.9382716049382716,
+    "roc_auc": 0.9966931216931216,
+    "pr_auc": 0.9944826613593767,
+    "brier": 0.026610597076928956,
+    "nll": 0.08401017919984398,
+    "ece": 0.03683260610644897,
+    "tn": 71,
+    "fp": 1,
+    "fn": 4,
+    "tp": 38,
+    "confusion_matrix": [
+      [
+        71,
+        1
+      ],
+      [
+        4,
+        38
+      ]
+    ]
+  },
+  "selective": {
+    "n": 114,
+    "accepted": 38,
+    "coverage": 0.3333333333333333,
+    "review_rate": 0.6666666666666667,
+    "accepted_accuracy": 1.0,
+    "accepted_accuracy_ci95": [
+      0.908190131774416,
+      0.9999999999999999
+    ],
+    "accepted_malignant": 0,
+    "accepted_case_false_negative_rate": 0.0,
+    "malignant_escape_rate": 0.0,
+    "malignant_referral_rate": 1.0,
+    "referred_malignant": 42,
+    "referred_benign": 34,
+    "out_of_scope": 0
+  },
+  "conformal": {
+    "nominal_coverage": 0.9,
+    "empirical_coverage": 0.9473684210526315,
+    "coverage_ci95": [
+      0.8899118941026302,
+      0.9756578384920905
+    ],
+    "mean_set_size": 0.9824561403508771,
+    "empty_sets": 2,
+    "both_class_sets": 0,
+    "benign_coverage": 0.9861111111111112,
+    "malignant_coverage": 0.8809523809523809
+  },
+  "models": {
+    "logistic": {
+      "n": 114,
+      "positive_class": "MALIGNANT=1",
+      "correct": 110,
+      "accuracy": 0.9649122807017544,
+      "accuracy_ci95": [
+        0.9132415849113642,
+        0.9862720587655025
+      ],
+      "precision": 1.0,
+      "malignant_recall": 0.9047619047619048,
+      "recall_ci95": [
+        0.7793489419142897,
+        0.9623377511944261
+      ],
+      "specificity": 1.0,
+      "f1": 0.95,
+      "roc_auc": 0.9986772486772486,
+      "pr_auc": 0.9979296066252588,
+      "brier": 0.020436705067552557,
+      "nll": 0.06939389954230821,
+      "ece": 0.039798136032379465,
+      "tn": 72,
+      "fp": 0,
+      "fn": 4,
+      "tp": 38,
+      "confusion_matrix": [
+        [
+          72,
+          0
+        ],
+        [
+          4,
+          38
+        ]
+      ],
+      "inference_ms_per_case": 0.31111403510103147
+    },
+    "rbf_svm": {
+      "n": 114,
+      "positive_class": "MALIGNANT=1",
+      "correct": 109,
+      "accuracy": 0.956140350877193,
+      "accuracy_ci95": [
+        0.9014191976891217,
+        0.981122490446672
+      ],
+      "precision": 0.9743589743589743,
+      "malignant_recall": 0.9047619047619048,
+      "recall_ci95": [
+        0.7793489419142897,
+        0.9623377511944261
+      ],
+      "specificity": 0.9861111111111112,
+      "f1": 0.9382716049382716,
+      "roc_auc": 0.9966931216931216,
+      "pr_auc": 0.9944826613593767,
+      "brier": 0.026610597076928956,
+      "nll": 0.08401017919984398,
+      "ece": 0.03683260610644897,
+      "tn": 71,
+      "fp": 1,
+      "fn": 4,
+      "tp": 38,
+      "confusion_matrix": [
+        [
+          71,
+          1
+        ],
+        [
+          4,
+          38
+        ]
+      ],
+      "inference_ms_per_case": 0.3576754386079285
+    },
+    "random_forest": {
+      "n": 114,
+      "positive_class": "MALIGNANT=1",
+      "correct": 109,
+      "accuracy": 0.956140350877193,
+      "accuracy_ci95": [
+        0.9014191976891217,
+        0.981122490446672
+      ],
+      "precision": 1.0,
+      "malignant_recall": 0.8809523809523809,
+      "recall_ci95": [
+        0.7499960973799032,
+        0.9480619667224176
+      ],
+      "specificity": 1.0,
+      "f1": 0.9367088607594937,
+      "roc_auc": 0.9917328042328042,
+      "pr_auc": 0.9875042008849908,
+      "brier": 0.037509752100986594,
+      "nll": 0.12875056642349458,
+      "ece": 0.04630263157894737,
+      "tn": 72,
+      "fp": 0,
+      "fn": 5,
+      "tp": 37,
+      "confusion_matrix": [
+        [
+          72,
+          0
+        ],
+        [
+          5,
+          37
+        ]
+      ],
+      "inference_ms_per_case": 1.2048877192443654
+    },
+    "xgboost": {
+      "n": 114,
+      "positive_class": "MALIGNANT=1",
+      "correct": 110,
+      "accuracy": 0.9649122807017544,
+      "accuracy_ci95": [
+        0.9132415849113642,
+        0.9862720587655025
+      ],
+      "precision": 1.0,
+      "malignant_recall": 0.9047619047619048,
+      "recall_ci95": [
+        0.7793489419142897,
+        0.9623377511944261
+      ],
+      "specificity": 1.0,
+      "f1": 0.95,
+      "roc_auc": 0.9947089947089948,
+      "pr_auc": 0.9917445298131629,
+      "brier": 0.034377495337124364,
+      "nll": 0.12856857098451008,
+      "ece": 0.046098056527083375,
+      "tn": 72,
+      "fp": 0,
+      "fn": 4,
+      "tp": 38,
+      "confusion_matrix": [
+        [
+          72,
+          0
+        ],
+        [
+          4,
+          38
+        ]
+      ],
+      "inference_ms_per_case": 0.4619596491689312
+    },
+    "mlp": {
+      "n": 114,
+      "positive_class": "MALIGNANT=1",
+      "correct": 112,
+      "accuracy": 0.9824561403508771,
+      "accuracy_ci95": [
+        0.9382819735400814,
+        0.9951755812189311
+      ],
+      "precision": 1.0,
+      "malignant_recall": 0.9523809523809523,
+      "recall_ci95": [
+        0.8421014760304114,
+        0.9868424750910944
+      ],
+      "specificity": 1.0,
+      "f1": 0.975609756097561,
+      "roc_auc": 0.9986772486772487,
+      "pr_auc": 0.9978458049886623,
+      "brier": 0.017438984994691584,
+      "nll": 0.06461489421401051,
+      "ece": 0.022463832389596004,
+      "tn": 72,
+      "fp": 0,
+      "fn": 2,
+      "tp": 40,
+      "confusion_matrix": [
+        [
+          72,
+          0
+        ],
+        [
+          2,
+          40
+        ]
+      ],
+      "inference_ms_per_case": 0.41575175444513823
+    },
+    "deep_ensemble": {
+      "n": 114,
+      "positive_class": "MALIGNANT=1",
+      "correct": 111,
+      "accuracy": 0.9736842105263158,
+      "accuracy_ci95": [
+        0.9254751605265878,
+        0.9910104386913519
+      ],
+      "precision": 0.975609756097561,
+      "malignant_recall": 0.9523809523809523,
+      "recall_ci95": [
+        0.8421014760304114,
+        0.9868424750910944
+      ],
+      "specificity": 0.9861111111111112,
+      "f1": 0.963855421686747,
+      "roc_auc": 0.998015873015873,
+      "pr_auc": 0.9967819931083073,
+      "brier": 0.0192741642800079,
+      "nll": 0.06357753224757519,
+      "ece": 0.021253892530997593,
+      "tn": 71,
+      "fp": 1,
+      "fn": 2,
+      "tp": 40,
+      "confusion_matrix": [
+        [
+          71,
+          1
+        ],
+        [
+          2,
+          40
+        ]
+      ],
+      "inference_ms_per_case": 0.5416938596075246
+    }
+  },
+  "policy": {
+    "max_p_malignant": 0.02,
+    "max_entropy": 0.65,
+    "max_disagreement": 0.15,
+    "max_mc_std": 0.15,
+    "feasible": true
+  },
+  "protocol": "Single locked stratified test evaluation after CV selection, calibration, conformalization and policy freezing."
+}

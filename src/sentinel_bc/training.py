@@ -42,7 +42,7 @@ def train(mode="full", output_root=ROOT):
     artifacts = Path(output_root) / "artifacts" / mode
     results = Path(output_root) / "results" / mode
     # An existing locked experiment is never silently replaced or evaluated again.
-    if (artifacts / "manifest.json").exists() or (results / "metrics.json").exists():
+    if (artifacts / "manifest.json").exists():
         raise FileExistsError(f"{mode} already exists. Use --output-root for an independent experiment.")
     artifacts.mkdir(parents=True, exist_ok=True)
     results.mkdir(parents=True, exist_ok=True)

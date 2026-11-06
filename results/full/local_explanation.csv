@@ -1,0 +1,31 @@
+measurement,value,contribution_to_p_malignant,direction,meaning
+worst perimeter,161.7,0.10924494703286976,toward malignant,Length of the nucleus boundary
+mean perimeter,132.5,0.10592890248770527,toward malignant,Length of the nucleus boundary
+worst radius,24.22,0.0923361820284319,toward malignant,Average distance from the nucleus center to its perimeter
+worst area,1750.0,0.0865666014191292,toward malignant,Area enclosed by the nucleus boundary
+mean area,1306.0,0.08576548225438586,toward malignant,Area enclosed by the nucleus boundary
+mean radius,20.48,0.06891169915957646,toward malignant,Average distance from the nucleus center to its perimeter
+perimeter error,5.144,0.04532207749411956,toward malignant,Length of the nucleus boundary
+worst symmetry,0.2238,-0.04135681893600546,toward benign,Nucleus symmetry measurement
+mean texture,21.46,0.04078625445464155,toward malignant,Variation in image gray levels
+radius error,0.6874,0.02692233604484996,toward malignant,Average distance from the nucleus center to its perimeter
+area error,83.5,0.026011677478698546,toward malignant,Area enclosed by the nucleus boundary
+mean concave points,0.06022,0.019751593831816117,toward malignant,Number of inward boundary portions
+worst concavity,0.3158,0.013810631370160911,toward malignant,Severity of inward boundary curves
+worst texture,26.17,0.01258693587353564,toward malignant,Variation in image gray levels
+mean fractal dimension,0.05177,0.010851653993447313,toward malignant,Boundary complexity measurement
+mean symmetry,0.1467,0.010691273092587161,toward malignant,Nucleus symmetry measurement
+worst smoothness,0.1228,-0.007990030367572667,toward benign,Local variation in radius lengths
+compactness error,0.03133,-0.0069169169109477525,toward benign,Boundary compactness derived from perimeter and area
+mean smoothness,0.08355,-0.005574803942885083,toward benign,Local variation in radius lengths
+texture error,1.041,0.0053877597426050345,toward malignant,Variation in image gray levels
+worst concave points,0.1445,0.004573952952644733,toward malignant,Number of inward boundary portions
+mean concavity,0.09042,0.004525030364373767,toward malignant,Severity of inward boundary curves
+symmetry error,0.01341,0.00412898000480109,toward malignant,Nucleus symmetry measurement
+mean compactness,0.08348,-0.0034114146292577308,toward benign,Boundary compactness derived from perimeter and area
+smoothness error,0.007959,-0.003092123686361923,toward benign,Local variation in radius lengths
+concave points error,0.01671,-0.003020112130334082,toward benign,Number of inward boundary portions
+concavity error,0.04257,0.00286738322860125,toward malignant,Severity of inward boundary curves
+fractal dimension error,0.003933,0.001543957457833145,toward malignant,Boundary complexity measurement
+worst fractal dimension,0.07127,0.0014627138359105119,toward malignant,Boundary complexity measurement
+worst compactness,0.2311,-0.00018341604470998676,toward benign,Boundary compactness derived from perimeter and area

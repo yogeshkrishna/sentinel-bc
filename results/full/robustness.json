@@ -1,0 +1,355 @@
+[
+  {
+    "experiment": "unmodified_policy_data",
+    "n": 68,
+    "valid_probability_rows": 68,
+    "ood_fraction": 0.014705882352941176,
+    "selective": {
+      "n": 68,
+      "accepted": 20,
+      "coverage": 0.29411764705882354,
+      "review_rate": 0.7058823529411764,
+      "accepted_accuracy": 1.0,
+      "accepted_accuracy_ci95": [
+        0.8388748419471806,
+        1.0
+      ],
+      "accepted_malignant": 0,
+      "accepted_case_false_negative_rate": 0.0,
+      "malignant_escape_rate": 0.0,
+      "malignant_referral_rate": 1.0,
+      "referred_malignant": 25,
+      "referred_benign": 23,
+      "out_of_scope": 1
+    },
+    "classifier": {
+      "n": 68,
+      "positive_class": "MALIGNANT=1",
+      "correct": 66,
+      "accuracy": 0.9705882352941176,
+      "accuracy_ci95": [
+        0.8989536863477694,
+        0.9918968204568701
+      ],
+      "precision": 1.0,
+      "malignant_recall": 0.92,
+      "recall_ci95": [
+        0.7503389104960468,
+        0.9777795987151524
+      ],
+      "specificity": 1.0,
+      "f1": 0.9583333333333334,
+      "roc_auc": 0.9841860465116279,
+      "pr_auc": 0.9819230769230771,
+      "brier": 0.03607392990368022,
+      "nll": 0.14758097016231458,
+      "ece": 0.04484523816798474,
+      "tn": 43,
+      "fp": 0,
+      "fn": 2,
+      "tp": 23,
+      "confusion_matrix": [
+        [
+          43,
+          0
+        ],
+        [
+          2,
+          23
+        ]
+      ]
+    }
+  },
+  {
+    "experiment": "noise_005_train_std",
+    "n": 68,
+    "valid_probability_rows": 68,
+    "ood_fraction": 0.014705882352941176,
+    "selective": {
+      "n": 68,
+      "accepted": 22,
+      "coverage": 0.3235294117647059,
+      "review_rate": 0.6764705882352942,
+      "accepted_accuracy": 1.0,
+      "accepted_accuracy_ci95": [
+        0.8513451253913791,
+        1.0
+      ],
+      "accepted_malignant": 0,
+      "accepted_case_false_negative_rate": 0.0,
+      "malignant_escape_rate": 0.0,
+      "malignant_referral_rate": 1.0,
+      "referred_malignant": 25,
+      "referred_benign": 21,
+      "out_of_scope": 1
+    },
+    "classifier": {
+      "n": 68,
+      "positive_class": "MALIGNANT=1",
+      "correct": 66,
+      "accuracy": 0.9705882352941176,
+      "accuracy_ci95": [
+        0.8989536863477694,
+        0.9918968204568701
+      ],
+      "precision": 1.0,
+      "malignant_recall": 0.92,
+      "recall_ci95": [
+        0.7503389104960468,
+        0.9777795987151524
+      ],
+      "specificity": 1.0,
+      "f1": 0.9583333333333334,
+      "roc_auc": 0.9813953488372092,
+      "pr_auc": 0.9801788908765654,
+      "brier": 0.03509030441469354,
+      "nll": 0.14659770122131205,
+      "ece": 0.05232536615738503,
+      "tn": 43,
+      "fp": 0,
+      "fn": 2,
+      "tp": 23,
+      "confusion_matrix": [
+        [
+          43,
+          0
+        ],
+        [
+          2,
+          23
+        ]
+      ]
+    }
+  },
+  {
+    "experiment": "noise_020_train_std",
+    "n": 68,
+    "valid_probability_rows": 62,
+    "ood_fraction": 0.10294117647058823,
+    "selective": {
+      "n": 68,
+      "accepted": 14,
+      "coverage": 0.20588235294117646,
+      "review_rate": 0.7941176470588236,
+      "accepted_accuracy": 1.0,
+      "accepted_accuracy_ci95": [
+        0.7846891972623643,
+        1.0
+      ],
+      "accepted_malignant": 0,
+      "accepted_case_false_negative_rate": 0.0,
+      "malignant_escape_rate": 0.0,
+      "malignant_referral_rate": 1.0,
+      "referred_malignant": 25,
+      "referred_benign": 29,
+      "out_of_scope": 7
+    },
+    "classifier": {
+      "n": 62,
+      "positive_class": "MALIGNANT=1",
+      "correct": 60,
+      "accuracy": 0.967741935483871,
+      "accuracy_ci95": [
+        0.8897953040501456,
+        0.9911086285001833
+      ],
+      "precision": 1.0,
+      "malignant_recall": 0.92,
+      "recall_ci95": [
+        0.7503389104960468,
+        0.9777795987151524
+      ],
+      "specificity": 1.0,
+      "f1": 0.9583333333333334,
+      "roc_auc": 0.9816216216216217,
+      "pr_auc": 0.9806015037593987,
+      "brier": 0.042954735026099485,
+      "nll": 0.16365558087537455,
+      "ece": 0.07934790314276466,
+      "tn": 37,
+      "fp": 0,
+      "fn": 2,
+      "tp": 23,
+      "confusion_matrix": [
+        [
+          37,
+          0
+        ],
+        [
+          2,
+          23
+        ]
+      ]
+    }
+  },
+  {
+    "experiment": "radius_plus_10pct",
+    "n": 68,
+    "valid_probability_rows": 68,
+    "ood_fraction": 0.014705882352941176,
+    "selective": {
+      "n": 68,
+      "accepted": 19,
+      "coverage": 0.27941176470588236,
+      "review_rate": 0.7205882352941176,
+      "accepted_accuracy": 1.0,
+      "accepted_accuracy_ci95": [
+        0.8318207759473837,
+        1.0
+      ],
+      "accepted_malignant": 0,
+      "accepted_case_false_negative_rate": 0.0,
+      "malignant_escape_rate": 0.0,
+      "malignant_referral_rate": 1.0,
+      "referred_malignant": 25,
+      "referred_benign": 24,
+      "out_of_scope": 1
+    },
+    "classifier": {
+      "n": 68,
+      "positive_class": "MALIGNANT=1",
+      "correct": 65,
+      "accuracy": 0.9558823529411765,
+      "accuracy_ci95": [
+        0.8781280481750362,
+        0.9848833802919585
+      ],
+      "precision": 0.9583333333333334,
+      "malignant_recall": 0.92,
+      "recall_ci95": [
+        0.7503389104960468,
+        0.9777795987151524
+      ],
+      "specificity": 0.9767441860465116,
+      "f1": 0.9387755102040817,
+      "roc_auc": 0.9823255813953489,
+      "pr_auc": 0.9796466541588494,
+      "brier": 0.03717683642680208,
+      "nll": 0.14983362167688835,
+      "ece": 0.04221210231848252,
+      "tn": 42,
+      "fp": 1,
+      "fn": 2,
+      "tp": 23,
+      "confusion_matrix": [
+        [
+          42,
+          1
+        ],
+        [
+          2,
+          23
+        ]
+      ]
+    }
+  },
+  {
+    "experiment": "missing_texture",
+    "n": 68,
+    "valid_probability_rows": 0,
+    "ood_fraction": 1.0,
+    "selective": {
+      "n": 68,
+      "accepted": 0,
+      "coverage": 0.0,
+      "review_rate": 1.0,
+      "accepted_accuracy": null,
+      "accepted_accuracy_ci95": [
+        null,
+        null
+      ],
+      "accepted_malignant": 0,
+      "accepted_case_false_negative_rate": null,
+      "malignant_escape_rate": 0.0,
+      "malignant_referral_rate": 1.0,
+      "referred_malignant": 25,
+      "referred_benign": 43,
+      "out_of_scope": 68
+    }
+  },
+  {
+    "experiment": "implausible_10x",
+    "n": 68,
+    "valid_probability_rows": 68,
+    "ood_fraction": 1.0,
+    "selective": {
+      "n": 68,
+      "accepted": 0,
+      "coverage": 0.0,
+      "review_rate": 1.0,
+      "accepted_accuracy": null,
+      "accepted_accuracy_ci95": [
+        null,
+        null
+      ],
+      "accepted_malignant": 0,
+      "accepted_case_false_negative_rate": null,
+      "malignant_escape_rate": 0.0,
+      "malignant_referral_rate": 1.0,
+      "referred_malignant": 25,
+      "referred_benign": 43,
+      "out_of_scope": 68
+    },
+    "classifier": {
+      "n": 68,
+      "positive_class": "MALIGNANT=1",
+      "correct": 25,
+      "accuracy": 0.36764705882352944,
+      "accuracy_ci95": [
+        0.26300465135235673,
+        0.4864436436088385
+      ],
+      "precision": 0.36764705882352944,
+      "malignant_recall": 1.0,
+      "recall_ci95": [
+        0.8668077490609515,
+        0.9999999999999999
+      ],
+      "specificity": 0.0,
+      "f1": 0.5376344086021505,
+      "roc_auc": 0.5,
+      "pr_auc": 0.36764705882352944,
+      "brier": 0.2656747209585576,
+      "nll": 0.7246093393230812,
+      "ece": 0.18218677777659886,
+      "tn": 0,
+      "fp": 43,
+      "fn": 0,
+      "tp": 25,
+      "confusion_matrix": [
+        [
+          0,
+          43
+        ],
+        [
+          0,
+          25
+        ]
+      ]
+    }
+  },
+  {
+    "experiment": "negative_radius",
+    "n": 68,
+    "valid_probability_rows": 0,
+    "ood_fraction": 1.0,
+    "selective": {
+      "n": 68,
+      "accepted": 0,
+      "coverage": 0.0,
+      "review_rate": 1.0,
+      "accepted_accuracy": null,
+      "accepted_accuracy_ci95": [
+        null,
+        null
+      ],
+      "accepted_malignant": 0,
+      "accepted_case_false_negative_rate": null,
+      "malignant_escape_rate": 0.0,
+      "malignant_referral_rate": 1.0,
+      "referred_malignant": 25,
+      "referred_benign": 43,
+      "out_of_scope": 68
+    }
+  }
+]
