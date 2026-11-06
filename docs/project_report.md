@@ -164,8 +164,10 @@ Training, calibration, conformalization, uncertainty, safety, inference,
 explanation, evaluation, persistence and UI have separate modules. A manifest
 binds feature order, canonical classes, runtime versions and SHA-256 digests to
 one model version. The inference engine fails on missing or altered components.
-The Gradio app has Overview, Prediction Console, Model Comparison, Reliability
-and Safety, Human Review Queue, and Research and Methodology tabs.
+The upgraded Gradio app has Train, Predict, Review and Results tabs. The local
+worker fits each new experiment in an isolated directory. Activation checks the
+model and evaluation together. The results in this report describe the preserved
+v1.0.0 benchmark. See the [training guide](../README.md#train-your-dataset).
 
 SQLite records anonymous cases and original predictions separately from human
 decisions. Atomic transactions append review audit records. Triggers prevent

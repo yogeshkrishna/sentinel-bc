@@ -1,50 +1,20 @@
-# Five-minute faculty demonstration
+# Five-minute Training Studio demonstration
 
-Use `run.bat`, then open http://127.0.0.1:7860. Full artifacts must exist. All
-dropdown examples are labeled historical WDBC policy-development rows, never
-real patient records. Model status and version appear in Overview.
+Use Python 3.12, run `setup.bat` once, then start `run.bat` and open
+[Training Studio](http://127.0.0.1:7860). Use teaching measurements only.
+The app keeps the historical v1.0.0 benchmark separate from student runs.
 
-**0:00–0:35 — Purpose and evidence.** Explain that the system classifies 30
-already extracted morphology measurements. Show 109/114 primary classifier
-accuracy, 4 false negatives, 38/114 gate acceptance and the research disclaimer.
-State that accepted accuracy only makes sense alongside coverage.
+| Time | What to show |
+|---|---|
+| 0:00–0:45 | In **Train**, open **Preview and CSV templates** and download the labeled public WDBC example. Select **Upload labeled CSV** and upload it. Point out 569 rows, 30 features, 357 benign labels and 212 malignant labels. The app recognizes it as repeated WDBC data. |
+| 0:45–1:45 | Select **Quick Training** and click **Train Models**. Show the real phase, elapsed time and recent activity. Explain that cross-validation chooses the model before calibration, conformalization, policy selection and final testing. Allow extra time on a slower CPU. |
+| 1:45–2:20 | Read the completed run's test accuracy, malignant recall, false negatives and gate coverage. Click **Use This Trained Model** and confirm the active version changes. |
+| 2:20–3:25 | In **Predict**, choose a labeled benign example and click **Predict**. Repeat with the malignant referral example. Compare the predicted class, probability and gate decision. Expand prediction details if asked about entropy, conformal sets or SHAP. |
+| 3:25–4:15 | In **Review**, select the automatically added case by its ID. Record **FURTHER_REVIEW** and a teaching note. Expand the audit history to show the original model output and the new reviewer action. |
+| 4:15–5:00 | In **Results**, report accepted accuracy together with coverage, then show the ANN curves, confusion matrix and reliability diagram. Open advanced evidence to show MAPIE coverage and move the educational threshold. The deployed threshold stays fixed. |
 
-**0:35–1:15 — Low-risk example.** Open Prediction Console and choose the labeled
-low-risk benign example (WDBC row 267 in the delivered experiment). Evaluate it.
-Point to calibrated malignant probability, the benign-only set and the reason
-code. Explain that this is a research estimate, not clinical clearance.
-
-**1:15–1:50 — Malignant and uncertain examples.** Select the labeled malignant
-referral example, evaluate and show human review. Then select the most uncertain
-development example. Show entropy and its review reason. A source label is
-educational context; it never enters the model's feature vector. SHAP signs
-describe attribution toward malignant/benign relative to a background, not cause.
-
-**1:50–2:10 — Invalid / OOD.** Change mean radius to -1 and evaluate. The result
-must be OUT_OF_SCOPE_INPUT. Restore the source example. A very large positive
-radius also triggers the feature-space screen. Do not save impossible values
-as a real case.
-
-**2:10–3:00 — Human review.** Evaluate a valid example and click Add to review
-queue. Copy its anonymous case ID. In Human Review Queue refresh, paste the ID,
-inspect the case, choose FURTHER_REVIEW and enter a brief teaching note. Record
-review. Show the unchanged original output and the appended HUMAN_REVIEW audit
-entry. Export decisions and explain that notes and measurements are excluded.
-No automatic retraining occurs.
-
-**3:00–4:00 — Reliability dashboard.** Show calibration before/after and state
-that the held-out Brier score worsened from 0.0266 to 0.0324. Explain 90% nominal
-conformal prediction and 94.74% observed marginal test coverage. Show the gate's
-33.33% coverage and 66.67% review rate. Move the educational threshold slider and
-point out the deployed threshold remains 0.02. Synthetic noise is a controlled
-stress test, not external clinical evidence.
-
-**4:00–4:35 — Model comparison.** Show the development CV rule and the six
-candidate families. The MLP scored 98.25% on the test, but the SVM remains primary
-because development selected it. Show actual neural learning curves and seeds.
-Changing the deployed model now based on this test would violate the protocol.
-
-**4:35–5:00 — Reproducibility and limits.** Show the saved splits, manifest,
-training command and tests. Close with historical single-source data, small
-calibration/policy samples and absent prospective clinical validation. Future
-work needs an independent cohort and domain-led workflow evaluation.
+The public example exercises the CSV workflow on the original dataset. For a
+different teaching corpus, use the template and confirm the dataset summary
+before starting. Do not use a repeated WDBC run as independent external evidence.
+The [historical benchmark](project_report.md) reports a separate frozen
+experiment, including calibration performance and its limitations.

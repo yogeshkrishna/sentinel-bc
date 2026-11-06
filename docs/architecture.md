@@ -2,7 +2,7 @@
 
 ```mermaid
 flowchart LR
-    A[Bundled UCI WDBC] --> B[Fixed stratified partitions]
+    A[Bundled WDBC or validated labeled CSV] --> B[Disjoint stratified partitions]
     B --> C[Fold-local classical and Keras training]
     C --> D[Development selection]
     D --> E[Held-out sigmoid calibration]
@@ -20,7 +20,8 @@ flowchart LR
     O --> P[SQLite human review and audit]
 ```
 
-`train.py` owns fitting and freezing. `training.py` coordinates data roles;
+`train.py` and Gradio start the same local worker through `runs.py`.
+`training.py` coordinates data roles;
 `models.py` owns fresh Keras weights and classical candidates. `calibration.py`,
 `conformal.py`, `uncertainty.py` and `safety_gate.py` provide small independent
 interfaces. `reporting.py` performs one locked evaluation and writes cached
@@ -39,7 +40,10 @@ free text and measurements. The UI binds only to 127.0.0.1 by default and never
 opens a public tunnel. It has no deployment authentication or clinical record
 capabilities.
 
-`configs/default.yaml` is the only experiment configuration. `artifacts/quick`
-and `artifacts/full` never mix. Generated model files, runtime databases and
-private teaching notes stay out of Git. Published results are small, genuine
-research evidence from this public dataset.
+`configs/default.yaml` supplies defaults. Every run saves its effective settings,
+provenance, fingerprint, status and version under an isolated registry directory.
+A project lock allows one worker at a time. The worker records phases and checks
+for cancellation at model and epoch boundaries. Activation requires completed
+outputs, verified hashes and a matching model and evaluation version. The
+historical v1.0.0 bundle and its evaluation occupy separate directories.
+Runtime files, uploaded data and review databases stay out of Git.

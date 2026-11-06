@@ -14,7 +14,7 @@ RV College of Engineering, Bengaluru · Problem Statement 8
 measurements. It does not diagnose images, establish clinical utility or provide
 clinical clearance. Do not enter real patient data.
 
-![The running research console](docs/images/overview.png)
+![Live training progress in Gradio](docs/images/training-studio.png)
 
 ## What works
 
@@ -22,10 +22,11 @@ clinical clearance. Do not enter real patient data.
 - Fold-local preprocessing, fixed development/test roles and a single locked final evaluation.
 - Held-out sigmoid calibration, predictive entropy, deep ensemble disagreement and repeatable MC Dropout.
 - Independent 90% MAPIE split conformal sets, training-only OOD screening and a tested safety gate.
-- Six Gradio tabs, 30-feature input validation, bounded CSV inference, SHAP explanations and downloadable reports.
+- Four Gradio tabs for training, prediction, review and results, with bounded CSV inference and downloadable reports.
+- A local training worker with live phases, cancellation and explicit model activation.
 - SQLite human review, immutable original predictions, append-only audit records and anonymous exports.
 
-## Executed results
+## Historical v1.0.0 benchmark
 
 Version `20261106T070142Z-full`. The final test contains **114 observations: 72 benign
 and 42 malignant**. Positive class is always **MALIGNANT = 1**.
@@ -70,9 +71,6 @@ Install **64-bit Python 3.12** from Python's official installer, including the
 
 ```powershell
 .\setup.bat
-.\.venv\Scripts\python train.py --mode quick
-.\.venv\Scripts\python train.py --mode full
-.\.venv\Scripts\python -m pytest -q
 .\run.bat
 ```
 
@@ -81,8 +79,8 @@ CPU operation requires no account, API key, GPU or paid service. Native Windows
 TensorFlow uses the CPU. GPU support depends on a compatible TensorFlow/WSL2 or
 Linux installation and is optional. This exact build ran on Windows/Python 3.12.10.
 
-Models are already trained in the delivered local workspace. A fresh clone can
-train using the commands above, or download **trained-full.zip** from the
+The Training Studio works in a fresh clone with no model installed. To load the
+historical benchmark, download **trained-full.zip** from the
 [v1.0.0 release](https://github.com/yogeshkrishna/sentinel-bc/releases/tag/v1.0.0)
 and extract it at the repository root after setup. That archive contains only
 our own trained artifacts and their matching results. The source repository
@@ -97,7 +95,6 @@ python3.12 -m venv .venv
 source .venv/bin/activate
 python -m pip install -e .
 python -m pip check
-python train.py --mode full
 python app.py
 ```
 
@@ -106,34 +103,62 @@ experiment has not been executed. Version/hash checks protect local artifacts
 from accidental mixing. Load only trusted joblib bundles; hashes are not a
 security signature.
 
-## Training and reproducibility
+## Train your dataset
+
+1. Open **Train** and select **Upload labeled CSV**, or select **Built-in WDBC**.
+2. Check the validation summary and expand **Preview and CSV templates** to see
+   the first rows or download a template.
+3. Select **Quick Training** for logistic regression, SVM and one MLP, or
+   **Full Training** for all six candidates and three neural members.
+4. Click **Train Models** and follow the live phases. Cancellation takes effect
+   at the next training checkpoint.
+5. Select the completed run and click **Use This Trained Model**. Open
+   **Predict** to use it or **Results** to see its evaluation.
+
+Training CSVs use UTF-8 and the 30 exact feature names in the template plus a
+`label`, `diagnosis` or `target` column. Accepted values are 0/B/BENIGN and
+1/M/MALIGNANT. If multiple target columns are present, they must agree. Optional
+`sample_id` and `id` columns are excluded. Missing values, duplicate observations,
+unrecognized columns and ambiguous labels block training. Supported uploads are
+350–5,000 rows, at least 70 of each class and up to 10 MiB. Individual partitions
+must also meet their class-count requirements.
+
+Reordered copies of WDBC retain the benchmark test observations and are marked
+as repeated WDBC experiments. Mixed uploads containing known benchmark test
+measurements are refused. Compatible custom data uses separate, stratified
+fitting, calibration, conformalization, policy and test roles. Provenance and
+label quality require evidence beyond a matching schema or fingerprint.
+
+In **Predict**, choose a labeled example, enter measurements inside the collapsed
+manual section or upload an unlabeled CSV with only the 30 named measurements
+(100 rows / 1 MiB). Single-case referrals enter **Review** once per model version
+and measurement vector. Batch referral is opt-in. **Results** shows the active
+model's metrics and figures. Its threshold explorer leaves deployment policy
+fixed.
+
+## CLI and reproducibility
 
 ```powershell
-# Full experiment; refuses to replace an existing local trained run
-.\.venv\Scripts\python train.py --mode full
+# Train on the bundled dataset
+.\.venv\Scripts\python train.py --mode quick
 
-# A separate repeat, preserving the completed experiment
-.\.venv\Scripts\python train.py --mode full --output-root experiments/repeat
+# Train on your CSV
+.\.venv\Scripts\python train.py --mode full --data measurements.csv
 
-# Read cached test metrics and regenerate plots without predicting again
-.\.venv\Scripts\python evaluate.py --figures
+# Read the run's cached test metrics
+.\.venv\Scripts\python evaluate.py --run RUN_ID
 
 # Refresh the written report and notebook from cached results
 .\.venv\Scripts\python scripts/build_submission.py
 ```
 
-Quick mode trains logistic regression, SVM and one smaller Keras experiment.
-Full mode trains all six candidates, including a three-member deep ensemble.
-They use separate output directories. Full mode completed here, along with quick
-mode and a separate quick reproducibility check. The evaluator never retunes to
-the final test. Neural early stopping uses an inner validation partition.
-Reproducibility evidence and executed checks appear in the technical report.
-
-`app.py` never trains. Missing or incompatible artifacts produce an explicit
-setup screen. Inference works offline after installation/training. Completed
-local runs are protected by the artifact manifest. Published result files in a
-fresh clone are reference evidence and are replaced by the first genuine local
-training run. Use a separate output root to preserve another experiment.
+CLI and Gradio share one training worker. Each experiment gets a unique
+directory under `runtime/training/` with its dataset fingerprint, effective
+settings, status, model artifacts and evaluation. The optional `--output-root`
+flag selects another registry. Training begins only after an explicit action.
+Completed runs become selectable after integrity checks. Failed or cancelled
+runs leave the active model available. The benchmark and review history remain
+separate from training outputs. Add `--figures` to copy cached plots.
 
 ## Data and safety policy
 
