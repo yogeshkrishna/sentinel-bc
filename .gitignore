@@ -11,5 +11,9 @@ results/quick/
 .ipynb_checkpoints/
 build/
 dist/
+experiments/
+.chart-data-*/
+.codex-finalizer/
+*.zip
 *.log
 

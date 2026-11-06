@@ -1,5 +1,7 @@
 """One locked evaluation, saved predictions, and figures reproducible without refitting."""
 from dataclasses import replace
+from pathlib import Path
+import json
 import time
 import numpy as np
 import pandas as pd
@@ -10,7 +12,7 @@ from sklearn.calibration import calibration_curve
 from sklearn.metrics import roc_curve, precision_recall_curve, roc_auc_score
 from .config import write_json
 from .inference import Engine
-from .evaluation import classification_metrics, selective_metrics, risk_coverage
+from .evaluation import classification_metrics, selective_metrics, risk_coverage, wilson
 from .safety_gate import LOW, REVIEW, apply_policy
 from .explainability import explain, global_permutation, local_table
 
@@ -28,7 +30,6 @@ def bootstrap_auc(y, p):
 def evaluate_locked_run(artifacts, results, split, x, y):
     engine = Engine(artifacts)
     if (results / "metrics.json").exists():
-        import json
         cached = json.loads((results / "metrics.json").read_text())
         if cached["version"] == engine.metadata["version"]:
             raise FileExistsError("This model version already has a locked evaluation; use cached results")
@@ -52,7 +53,7 @@ def evaluate_locked_run(artifacts, results, split, x, y):
     sets = np.array([[name in r["prediction_set"] for name in ["BENIGN", "MALIGNANT"]] for r in predictions])
     conformal = {"nominal_coverage": engine.metadata["config"]["conformal_confidence"],
                  "empirical_coverage": float(sets[np.arange(len(yt)), yt].mean()),
-                 "coverage_ci95": __import__("sentinel_bc.evaluation", fromlist=["wilson"]).wilson(int(sets[np.arange(len(yt)), yt].sum()), len(yt)),
+                 "coverage_ci95": wilson(int(sets[np.arange(len(yt)), yt].sum()), len(yt)),
                  "mean_set_size": float(sets.sum(axis=1).mean()),
                  "empty_sets": int(sum(sets.sum(axis=1)==0)), "both_class_sets": int(sum(sets.sum(axis=1)==2)),
                  "benign_coverage": float(sets[yt==0, 0].mean()), "malignant_coverage": float(sets[yt==1, 1].mean())}
@@ -76,19 +77,7 @@ def evaluate_locked_run(artifacts, results, split, x, y):
     # Stress tests and feature importance use policy development data, never tune test.
     xp, yp = x.iloc[split["policy"]], y[split["policy"]]
     stress = robustness(engine, xp, yp)
-    demo_predictions = engine.predict(xp)
-    low = next((i for i, r in enumerate(demo_predictions) if r["decision"] == LOW), None)
-    high = int(np.argmax([r["p_malignant"] for r in demo_predictions]))
-    ambiguous = int(np.argmax([r["uncertainty"]["entropy"] for r in demo_predictions]))
-    demo_rows = []
-    for name, i in [("Low-risk example", low), ("Malignant referral example", high), ("Most uncertain development example", ambiguous)]:
-        if i is None:
-            continue
-        source_row = int(split["policy"][i])
-        label = "MALIGNANT" if yp[i] else "BENIGN"
-        demo_rows.append({"example_name": f"{name} · {label} · WDBC row {source_row}", "source_row": source_row,
-                          "source_label": label, "data_role": "policy_development", **xp.iloc[i].to_dict()})
-    pd.DataFrame(demo_rows).to_csv(results / "demo_cases.csv", index=False)
+    write_demo_cases(engine, xp, yp, split["policy"], results)
     global_importance = global_permutation(engine, xp, yp)
     global_importance.to_csv(results / "permutation_importance.csv", index=False)
     sv = explain(engine, xp.iloc[:8])
@@ -110,6 +99,26 @@ def evaluate_locked_run(artifacts, results, split, x, y):
         "conformal": conformal, "models": comparison, "policy": engine.bundle["policy"],
         "protocol": "Single locked stratified test evaluation after CV selection, calibration, conformalization and policy freezing."})
     draw_figures(results)
+
+
+def write_demo_cases(engine, xp, yp, source_indices, results):
+    """Choose labeled development examples with the behavior their names promise."""
+    demo_predictions = engine.predict(xp)
+    low = next((i for i, r in enumerate(demo_predictions) if r["decision"] == LOW), None)
+    in_scope = [i for i, r in enumerate(demo_predictions) if not r["ood"]]
+    high = max(in_scope, key=lambda i: demo_predictions[i]["p_malignant"]) if in_scope else None
+    ambiguous = max(in_scope, key=lambda i: demo_predictions[i]["uncertainty"]["entropy"]) if in_scope else None
+    ood_example = next((i for i, r in enumerate(demo_predictions) if r["ood"]), None)
+    demo_rows = []
+    for name, i in [("Low-risk example", low), ("Malignant referral example", high),
+                    ("Most uncertain in-scope example", ambiguous), ("Out-of-scope source example", ood_example)]:
+        if i is None:
+            continue
+        source_row = int(source_indices[i])
+        label = "MALIGNANT" if yp[i] else "BENIGN"
+        demo_rows.append({"example_name": f"{name} · {label} · WDBC row {source_row}", "source_row": source_row,
+                          "source_label": label, "data_role": "policy_development", **xp.iloc[i].to_dict()})
+    pd.DataFrame(demo_rows).to_csv(results / "demo_cases.csv", index=False)
 
 
 def robustness(engine, x, y):
@@ -137,8 +146,7 @@ def robustness(engine, x, y):
 
 def draw_figures(results):
     """Regenerate plots from saved evaluation output without touching the models."""
-    import json
-    results = __import__("pathlib").Path(results)
+    results = Path(results)
     d = pd.read_csv(results / "test_predictions.csv")
     metrics = json.loads((results / "metrics.json").read_text())
     directory = results / "figures"

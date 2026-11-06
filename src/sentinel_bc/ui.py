@@ -65,7 +65,7 @@ def build_ui(artifact_dir=None, database=None):
         title = result["decision"].replace("_", " ").title()
         text = f"### {title}\n" + " · ".join(result["reasons"]) + "\n\nResearch estimate. Human assessment remains essential."
         probability = {"MALIGNANT": result["p_malignant"], "BENIGN": result["p_benign"]} if result["p_malignant"] is not None else {}
-        state = {"prediction": result, "measurements": dict(zip(engine.features, [float(v) for v in values]))}
+        state = {"prediction": result, "measurements": dict(zip(engine.features, [float(v) if v is not None else None for v in values]))}
         path = ROOT / "runtime/reports" / (uuid.uuid4().hex + ".json")
         write_json(path, result)
         return text, probability, result, explanation, state, str(path)
@@ -73,7 +73,7 @@ def build_ui(artifact_dir=None, database=None):
     def save_case(state):
         if not state:
             raise gr.Error("Run a prediction first")
-        if not all(np.isfinite(list(state["measurements"].values()))):
+        if not np.isfinite(np.asarray(list(state["measurements"].values()), dtype=float)).all() or "INVALID_INPUT" in state["prediction"]["reasons"]:
             raise gr.Error("Invalid measurements cannot be stored as a case")
         case_id = store.add(state["prediction"], state["measurements"])
         return f"Saved **{case_id}**. Open Human Review Queue to inspect the original output."
@@ -136,7 +136,7 @@ def build_ui(artifact_dir=None, database=None):
                     with gr.Column():
                         gr.Markdown(f"### {group}")
                         for i in range(start, start+10):
-                            feature_inputs.append(gr.Number(value=defaults[i], label=engine.features[i], precision=6))
+                            feature_inputs.append(gr.Number(value=defaults[i], label=engine.features[i]))
             selector.change(load_example, selector, feature_inputs, api_name="load_example")
             run = gr.Button("Evaluate case", variant="primary")
             state = gr.State()
@@ -167,6 +167,7 @@ def build_ui(artifact_dir=None, database=None):
             gr.Markdown("## Development selected the model\nSelection maximizes the CV mean of accuracy and malignant recall, with smaller NLL breaking ties. Held-out results below were recorded after model and policy freezing.")
             leaderboard = pd.DataFrame([{k: r[k] for k in ["model", "accuracy_mean", "accuracy_std", "malignant_recall_mean", "malignant_recall_std", "brier_mean", "seconds"]} for r in cv])
             gr.Dataframe(leaderboard, label="Fitting-partition cross-validation", interactive=False)
+            gr.Markdown("Neural CV times include shared training of the ensemble members. They are the same shared compute budget and should not be added together.")
             gr.Dataframe(pd.DataFrame(metrics["models"]).T.reset_index().rename(columns={"index": "model"})[["model", "accuracy", "malignant_recall", "f1", "roc_auc", "pr_auc", "brier", "fn"]], label="Locked test comparison · n=114", interactive=False)
             figure("discrimination", "ROC and precision–recall")
             figure("confusion_matrices", "Confusion matrices · B=benign, M=malignant")

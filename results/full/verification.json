@@ -1,0 +1,62 @@
+{
+  "local_pytest": {
+    "passed": 30,
+    "failed": 0,
+    "skipped": 0,
+    "seconds": 68.51
+  },
+  "dependencies": "pip check passed",
+  "full_training": "executed; six candidates, three independent final Keras members",
+  "quick_training": "executed",
+  "quick_repeat": {
+    "independent_output_root": "runtime/reproducibility",
+    "maximum_numeric_prediction_difference": 0.0,
+    "gate_decisions_identical": true
+  },
+  "notebook": "executed all cells with nbclient; clean educational notebook delivered without giant output blobs",
+  "browser_checks": [
+    "labeled benign low-risk prediction",
+    "malignant source case referred",
+    "negative radius rejected",
+    "case saved, refreshed and reviewed",
+    "original prediction and appended audit visible",
+    "what-if threshold 0.20 changed descriptive output while deployed threshold stayed 0.02"
+  ],
+  "ci": "https://github.com/yogeshkrishna/sentinel-bc/actions/runs/42178697565",
+  "limits": [
+    "Full Linux/GPU training not executed",
+    "PowerPoint desktop editing not tested",
+    "No external clinical validation",
+    "MAPIE sklearn tag deprecation and Keras NumPy deprecation warnings retained; pinned compatible sklearn 1.7.2"
+  ],
+  "served_app_api": {
+    "labeled_examples": [
+      {
+        "case": "Low-risk example \u00b7 BENIGN \u00b7 WDBC row 267",
+        "decision": "LOW_RISK_ESTIMATE"
+      },
+      {
+        "case": "Malignant referral example \u00b7 MALIGNANT \u00b7 WDBC row 87",
+        "decision": "HUMAN_REVIEW_REQUIRED"
+      },
+      {
+        "case": "Most uncertain in-scope example \u00b7 BENIGN \u00b7 WDBC row 541",
+        "decision": "HUMAN_REVIEW_REQUIRED"
+      }
+    ],
+    "invalid_cases": 2,
+    "csv_rows": 4,
+    "review_preserved_original": true,
+    "what_if_preserved_deployed_policy": true
+  },
+  "presentation": {
+    "slides": 12,
+    "native_charts": 3,
+    "native_tables": 3,
+    "package_findings": 0,
+    "layout_findings": 0,
+    "chart_workbooks_verified": true,
+    "all_slides_visually_inspected": true,
+    "sha256": "999cdca3b49464054fa1fc681decf1da1689ae12dccd73d39353d522ddbc4134"
+  }
+}

@@ -94,7 +94,50 @@ def test_full_invalid_ood_and_malignant(full_engine):
     row.iloc[0, 0] = np.inf
     assert full_engine.predict(row)[0]["decision"] == "OUT_OF_SCOPE_INPUT"
     assert full_engine.predict(x.iloc[:1] * 100)[0]["decision"] == "OUT_OF_SCOPE_INPUT"
+    assert full_engine.predict(x.iloc[:1] * 1e300)[0]["decision"] == "OUT_OF_SCOPE_INPUT"
     for r in full_engine.predict(x.iloc[:20]):
         if r["p_malignant"] >= .5:
             assert r["decision"] != "LOW_RISK_ESTIMATE"
+
+
+def test_inverted_manifest_mapping_rejected(full_engine, tmp_path):
+    shutil.copytree(ROOT / "artifacts/full", tmp_path / "model")
+    manifest = tmp_path / "model/manifest.json"
+    data = json.loads(manifest.read_text())
+    data["class_mapping"] = {"0": "MALIGNANT", "1": "BENIGN"}
+    manifest.write_text(json.dumps(data))
+    with pytest.raises(ValueError, match="class mapping"):
+        Engine(tmp_path / "model")
+
+
+def test_missing_calibrator_rejected_even_with_updated_checksum(full_engine, tmp_path):
+    import hashlib
+    shutil.copytree(ROOT / "artifacts/full", tmp_path / "model")
+    bundle_file = tmp_path / "model/bundle.joblib"
+    bundle = joblib.load(bundle_file)
+    del bundle["calibrated"]
+    joblib.dump(bundle, bundle_file)
+    manifest = tmp_path / "model/manifest.json"
+    data = json.loads(manifest.read_text())
+    data["files"]["bundle.joblib"] = hashlib.sha256(bundle_file.read_bytes()).hexdigest()
+    manifest.write_text(json.dumps(data))
+    with pytest.raises(ValueError, match="Incomplete"):
+        Engine(tmp_path / "model")
+
+
+def test_shap_additivity(full_engine):
+    from sentinel_bc.explainability import explain
+    x, _ = load_data()
+    row = x.iloc[partitions(load_data()[1], load_config())["policy"][:1]]
+    values = explain(full_engine, row)
+    p = full_engine.bundle["calibrated"].predict_proba(row)[:, 1]
+    np.testing.assert_allclose(values.base_values + values.values.sum(axis=1), p, atol=1e-6)
+
+
+def test_labeled_demo_decisions_match_their_purpose(full_engine):
+    examples = pd.read_csv(ROOT / "results/full/demo_cases.csv")
+    results = full_engine.predict(examples[full_engine.features])
+    expected = ["LOW_RISK_ESTIMATE", "HUMAN_REVIEW_REQUIRED", "HUMAN_REVIEW_REQUIRED", "OUT_OF_SCOPE_INPUT"]
+    assert [r["decision"] for r in results] == expected
+    assert "HIGH_ENTROPY" in results[2]["reasons"]
 

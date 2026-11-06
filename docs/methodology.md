@@ -54,6 +54,12 @@ network and their mean-probability deep ensemble in the same CV protocol, and
 trains final members from scratch. Quick mode uses fewer epochs, one network,
 logistic regression and SVM. Its outputs occupy separate directories.
 
+Neural CV timing covers the shared member-training work and appears in both
+neural rows; these are not independent timing estimates. The saved final MLP
+training time estimates the mean per-member cost, while the ensemble time
+includes all final members. Do not sum shared CV times or interpret either
+measurement as a hardware-independent benchmark.
+
 ## Calibration and conformal prediction
 
 `CalibratedClassifierCV(FrozenEstimator(base), method="sigmoid")` fits only on
